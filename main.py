@@ -96,9 +96,10 @@ class SimulationRunner(object):
 
     def PrintSimulationResults(self):
         self.performance_monitor.PrintEvents()
+        self.performance_monitor.PrintPerformanceStats()
 
 
 if __name__ == "__main__":
     sim_runner = SimulationRunner()
     sim_runner.RunSimulation()
-    # sim_runner.PrintSimulationResults()
+    sim_runner.PrintSimulationResults()
