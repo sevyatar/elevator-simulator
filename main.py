@@ -38,7 +38,7 @@ class SimulationRunner(object):
         active_riders_pickup_map = {}
         active_riders_dropoff_map = {}
 
-        while True:
+        while next_event_index < len(self.simulation_events) or active_riders_pickup_map or active_riders_dropoff_map:
             if next_event_index < len(self.simulation_events):
                 next_event_ts = self.simulation_events[next_event_index]["timestamp"]
             # If there are no more sim event coming up, just let the elevator run until all tasks are completed
