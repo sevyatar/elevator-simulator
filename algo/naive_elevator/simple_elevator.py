@@ -19,12 +19,6 @@ class SimpleElevatorAlgo(NaiveElevatorAlgoInterface):
         self.tasks.append(SimpleElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
         return [task.floor for task in self.tasks]
 
-    def ConvertEventForRiderRegistration(self, source_floor, destination_floor):
-        '''
-        Simple algo receives only the source floor when a rider requests a ride
-        '''
-        return [source_floor]
-
     def RegisterRiderDestination(self, rider_id, destination_floor):
         '''
         Used to register a rider's destination, for algorithms where the rider inputs his destination floor
