@@ -11,9 +11,10 @@ class TaskType(enum.Enum):
 
 
 class BaseAlgoInterface(abc.ABC):
-    def __init__(self):
+    def __init__(self, elevator_conf):
         self.current_timestamp = None
         self.elevator_location = None
+        self.elevator_conf = elevator_conf
 
     @abc.abstractmethod
     def ConvertEventForRiderRegistration(self, source_floor, destination_floor):

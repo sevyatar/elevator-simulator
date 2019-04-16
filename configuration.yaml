@@ -1,5 +1,6 @@
 ELEVATOR:
   INITIAL_FLOOR: 1
+  MAX_FLOOR: 10
   TIME_TO_GO_UP_ONE_FLOOR: 3
   TIME_TO_GO_DOWN_ONE_FLOOR: 3
   TIME_TO_OPEN_DOORS: 5
@@ -9,4 +10,5 @@ SIMULATION:
   SIMULATION_FILE: demand_simulation/random_scenario/sim_1.csv
 
 ALGORITHM:
-  ALGORITHM_FILE: "123"
+#  ALGORITHM_CLASS: "algo.naive_elevator.simple_elevator.SimpleElevatorAlgo"
+  ALGORITHM_CLASS: "algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo"

@@ -1,7 +1,6 @@
 import yaml
 from elevator.elevator import Elevator
 from demand_simulation.simulation import LoadSimulationEvents
-from algo.naive_elevator.simple_elevator import SimpleElevatorAlgo
 from performance_monitor import PerformanceMonitor
 
 CONFIGURATION_FILE = 'configuration.yaml'
@@ -11,14 +10,24 @@ class SimulationRunner(object):
         with open(CONFIGURATION_FILE, 'rb') as f:
             self.conf = yaml.load(f, Loader=yaml.FullLoader)
 
-        self.elevator = Elevator(self.conf["ELEVATOR"])
-        self.algo = self.GetAlgo(self.conf["ALGORITHM"]["ALGORITHM_FILE"])
-        self.simulation_events = LoadSimulationEvents(self.conf["SIMULATION"]["SIMULATION_FILE"])
+        elevator_conf = self.conf["ELEVATOR"]
+        self.elevator = Elevator(elevator_conf)
+        self.algo = self.GetAlgo(self.conf["ALGORITHM"]["ALGORITHM_CLASS"], elevator_conf)
+        self.simulation_events = LoadSimulationEvents(self.conf["SIMULATION"]["SIMULATION_FILE"],
+                                                      self.conf["ELEVATOR"]["MAX_FLOOR"])
         self.performance_monitor = PerformanceMonitor()
 
-    def GetAlgo(self, algo_file):
-        # TODO - actually get the algorithm from the algo file
-        return SimpleElevatorAlgo()
+    def GetAlgo(self, algo_class, elevator_conf):
+        '''
+        Work some python magic -
+        Load the initial module (probably 'algo'), and then recursively import its children until left with the
+        relevant class type to instantiate.
+        '''
+        algo_module = ".".join(algo_class.split(".")[:-1])
+        module = __import__(algo_module)
+        for attribute in algo_class.split(".")[1:]:
+            module = getattr(module, attribute)
+        return module(elevator_conf)
 
     def _RerunAlgoWithNewPickup(self, current_ts, current_location, sim_event):
         self.algo.ElevatorHeartbeat(current_ts, current_location)
