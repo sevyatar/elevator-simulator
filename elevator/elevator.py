@@ -1,3 +1,5 @@
+import copy
+
 class Elevator(object):
     class Task(object):
         def __init__(self, floor, task_type):
@@ -16,7 +18,7 @@ class Elevator(object):
         self.doors_open = False
 
     def RegisterNextTasks(self, tasks):
-        self.task_list = tasks
+        self.task_list = copy.copy(tasks)
 
     def GetStatus(self):
         return self.current_ts, self.current_location
