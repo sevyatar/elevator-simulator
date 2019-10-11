@@ -104,6 +104,7 @@ class SimulationRunner(object):
                     del active_riders_dropoff_map[rider_id]
 
     def PrintSimulationResults(self):
+        print(type(self.algo).__name__)
         self.performance_monitor.PrintEvents()
         self.performance_monitor.PrintPerformanceStats()
 
