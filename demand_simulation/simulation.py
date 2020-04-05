@@ -1,9 +1,10 @@
 import csv
 
-def LoadSimulationEvents(filename, max_floor):
+
+def load_simulation_events(filename, max_floor):
     with open(filename, "r") as f:
         reader = csv.reader(f)
-        headers = next(reader)  # skip header
+        _ = next(reader)  # skip header
 
         data = []
         rider_id = 0
@@ -22,9 +23,7 @@ def LoadSimulationEvents(filename, max_floor):
                 raise Exception("Error in simulation file {} - source/destination floor can't be exceed max floor {}"
                                 .format(filename, max_floor))
 
-            data_to_append = {"timestamp": timestamp,
-                              "source_floor": source_floor,
-                              "destination_floor": destination_floor}
+            data_to_append = dict(timestamp=timestamp, source_floor=source_floor, destination_floor=destination_floor)
             data_to_append["rider_id"] = rider_id
             data.append(data_to_append)
             rider_id += 1

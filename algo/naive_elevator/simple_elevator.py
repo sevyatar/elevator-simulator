@@ -1,6 +1,7 @@
 from algo.algo_interface import NaiveElevatorAlgoInterface
 from algo.algo_interface import TaskType
 
+
 class SimpleElevatorAlgo(NaiveElevatorAlgoInterface):
     '''
     The SimpleElevatorAlgo always handles tasks in the order in which they registered into the system, no matter
@@ -16,11 +17,11 @@ class SimpleElevatorAlgo(NaiveElevatorAlgoInterface):
         super().__init__(elevator_conf)
         self.tasks = []
 
-    def RegisterRiderPickup(self, rider_id, source_floor):
+    def register_rider_pickup(self, rider_id, source_floor):
         self.tasks.append(SimpleElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
         return [task.floor for task in self.tasks]
 
-    def RegisterRiderDestination(self, rider_id, destination_floor):
+    def register_rider_destination(self, rider_id, destination_floor):
         '''
         Used to register a rider's destination, for algorithms where the rider inputs his destination floor
         only upon entering the elevator
@@ -28,10 +29,10 @@ class SimpleElevatorAlgo(NaiveElevatorAlgoInterface):
         self.tasks.append(SimpleElevatorAlgo.Task(rider_id, destination_floor, TaskType.DROPOFF))
         return [task.floor for task in self.tasks]
 
-    def ReportRiderPickup(self, timestamp, rider_id):
+    def report_rider_pickup(self, timestamp, rider_id):
         pickup_task = [a for a in self.tasks if a.rider_id == rider_id and a.task_type == TaskType.PICKUP][0]
         self.tasks.remove(pickup_task)
 
-    def ReportRiderDropoff(self, timestamp, rider_id):
+    def report_rider_dropoff(self, timestamp, rider_id):
         pickup_task = [a for a in self.tasks if a.rider_id == rider_id and a.task_type == TaskType.DROPOFF][0]
         self.tasks.remove(pickup_task)

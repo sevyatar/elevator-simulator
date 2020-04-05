@@ -1,9 +1,11 @@
 import enum
 
+
 class EventType(enum.Enum):
     REQUEST = 0
     PICKUP = 1
     DROPOFF = 2
+
 
 class PerformanceMonitor(object):
     def __init__(self):
@@ -19,7 +21,7 @@ class PerformanceMonitor(object):
 
     # TODO - potentially add monitoring for elevator movement
 
-    def _AddRiderEvent(self, timestamp, rider_id, event_type, location):
+    def _add_rider_event(self, timestamp, rider_id, event_type, location):
         if rider_id not in self.rider_to_events_map:
             self.rider_to_events_map[rider_id] = []
 
@@ -27,20 +29,20 @@ class PerformanceMonitor(object):
         self.rider_to_events_map[rider_id].append(event)
         self.events_log.append(event)
 
-    def RiderRequest(self, timestamp, rider_id, current_location):
-        self._AddRiderEvent(timestamp, rider_id, EventType.REQUEST, current_location)
+    def rider_request(self, timestamp, rider_id, current_location):
+        self._add_rider_event(timestamp, rider_id, EventType.REQUEST, current_location)
 
-    def RiderPickup(self, timestamp, rider_id, location):
-        self._AddRiderEvent(timestamp, rider_id, EventType.PICKUP, location)
+    def rider_pickup(self, timestamp, rider_id, location):
+        self._add_rider_event(timestamp, rider_id, EventType.PICKUP, location)
 
-    def RiderDropoff(self, timestamp, rider_id, location):
-        self._AddRiderEvent(timestamp, rider_id, EventType.DROPOFF, location)
+    def rider_dropoff(self, timestamp, rider_id, location):
+        self._add_rider_event(timestamp, rider_id, EventType.DROPOFF, location)
 
-    def PrintEvents(self):
+    def print_events(self):
         for e in self.events_log:
             print("TS: {:>7} ; Floor {:>4} ; {} rider {}".format(e.timestamp, e.location, e.event_type, e.rider_id))
 
-    def PrintPerformanceStats(self):
+    def print_performance_stats(self):
         wait_times = []
         ride_times = []
         times_to_destination = []

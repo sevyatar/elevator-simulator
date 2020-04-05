@@ -1,6 +1,12 @@
 import copy
 
+
 class Elevator(object):
+    '''
+    This class simulates an elevator. Generally, for any single point in time the elevator has a length>=0 list of tasks,
+    where a 'task' is a floor to be reached and then open and close the doors. Each task can be either a pickup, dropoff
+    of a 'wait' task.
+    '''
     class Task(object):
         def __init__(self, floor, task_type):
             self.floor = floor
@@ -17,16 +23,16 @@ class Elevator(object):
         self.current_ts = 0
         self.doors_open = False
 
-    def RegisterNextTasks(self, tasks):
+    def register_next_tasks(self, tasks):
         self.task_list = copy.copy(tasks)
 
-    def GetStatus(self):
+    def get_status(self):
         return self.current_ts, self.current_location
 
-    def IsTaskListEmpty(self):
+    def is_task_list_empty(self):
         return self.task_list == []
 
-    def RunToNextTaskOrMaxTs(self, max_timestamp):
+    def run_to_next_task_or_max_ts(self, max_timestamp):
         '''
         Lets the elevator run until it hits its next task, or until a timestamp is reached
         If max_timestamp in None, assume we can always reach the next task
@@ -36,7 +42,7 @@ class Elevator(object):
             self.current_ts = max_timestamp
             return None
 
-        #TODO - currently, the elevator can change direction immediately at any time, should I allow it?
+        # TODO - currently, the elevator can change direction immediately at any time, should I allow it?
 
         # If doors are currently open, the elevator must close them before moving again
         if self.doors_open:
