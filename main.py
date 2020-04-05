@@ -18,6 +18,14 @@ class SimulationRunner(object):
                                                         self.conf["ELEVATOR"]["MAX_FLOOR"])
         self.performance_monitor = PerformanceMonitor()
 
+        self.current_ts = 0
+        self.current_location = None
+
+        self.rider_id_to_dropoff_location_map = {}
+        self.active_riders_pickup_map = {}
+        self.active_riders_dropoff_map = {}
+        self.next_event_index = 0
+
     @staticmethod
     def _get_algo(algo_class, elevator_conf):
         '''
@@ -43,66 +51,76 @@ class SimulationRunner(object):
         algo_output_tasks = self.algo.register_rider_destination(rider_id, destination_floor)
         self.elevator.register_next_tasks(algo_output_tasks)
 
-    def run_simulation(self):
-        next_event_index = 0
-        rider_id_to_dropoff_location_map = {}
-        active_riders_pickup_map = {}
-        active_riders_dropoff_map = {}
+    def _record_all_rider_requests(self):
+        # Loop over all riders registering at the same time
+        while self.next_event_index < len(self.simulation_events) and \
+                self.simulation_events[self.next_event_index]["timestamp"] == self.current_ts:
+            sim_event = self.simulation_events[self.next_event_index]
+            rider_id = sim_event["rider_id"]
+            source_floor = sim_event["source_floor"]
+            destination_floor = sim_event["destination_floor"]
 
-        while next_event_index < len(self.simulation_events) or active_riders_pickup_map or active_riders_dropoff_map:
-            if next_event_index < len(self.simulation_events):
-                next_event_ts = self.simulation_events[next_event_index]["timestamp"]
-            # If there are no more sim event coming up, just let the elevator run until all tasks are completed
+            self.performance_monitor.rider_request(self.current_ts, rider_id, self.current_location)
+            self._rerun_algo_with_new_pickup(self.current_ts,
+                                             self.current_location,
+                                             sim_event)
+            self.active_riders_pickup_map[rider_id] = source_floor
+            self.rider_id_to_dropoff_location_map[rider_id] = destination_floor
+            self.next_event_index += 1
+
+    def _handle_rider_pickup(self):
+        picked_up_rider_ids = \
+            [a for a in self.active_riders_pickup_map.keys()
+             if self.active_riders_pickup_map[a] == self.current_location]
+
+        for rider_id in picked_up_rider_ids:
+            self.performance_monitor.rider_pickup(self.current_ts, rider_id, self.current_location)
+            self.algo.report_rider_pickup(self.current_ts, rider_id)
+            dropoff_floor = self.rider_id_to_dropoff_location_map[rider_id]
+            self.active_riders_dropoff_map[rider_id] = dropoff_floor
+            self._rerun_algo_with_new_dropoff(self.current_ts,
+                                              self.current_location,
+                                              rider_id,
+                                              dropoff_floor)
+            del self.active_riders_pickup_map[rider_id]
+
+    def _handle_rider_dropoff(self):
+        dropped_off_rider_ids = \
+            [a for a in self.active_riders_dropoff_map.keys() if
+             self.active_riders_dropoff_map[a] == self.current_location]
+        for rider_id in dropped_off_rider_ids:
+            self.performance_monitor.rider_dropoff(self.current_ts, rider_id, self.current_location)
+            self.algo.report_rider_dropoff(self.current_ts, rider_id)
+            del self.active_riders_dropoff_map[rider_id]
+
+    def run_simulation(self):
+        # Keep running the simulation as long as there are still future events or there are still incomplete rides
+        while self.next_event_index < len(self.simulation_events) \
+                or self.active_riders_pickup_map or self.active_riders_dropoff_map:
+
+            # Are there any more tasks?
+            if self.next_event_index < len(self.simulation_events):
+                next_event_ts = self.simulation_events[self.next_event_index]["timestamp"]
             else:
+                # If there are no more sim event coming up, just let the elevator run until all tasks are completed
                 next_event_ts = None
                 if self.elevator.is_task_list_empty():
                     break
 
             self.elevator.run_to_next_task_or_max_ts(max_timestamp=next_event_ts)
-            current_ts, current_location = self.elevator.get_status()
+            self.current_ts, self.current_location = self.elevator.get_status()
 
-            # A new rider is being registered
-            if current_ts == next_event_ts:
-                # Handle all riders registering at the same time
-                while next_event_index < len(self.simulation_events) and \
-                        self.simulation_events[next_event_index]["timestamp"] == current_ts:
-
-                    sim_event = self.simulation_events[next_event_index]
-                    rider_id = sim_event["rider_id"]
-                    source_floor = sim_event["source_floor"]
-                    destination_floor = sim_event["destination_floor"]
-
-                    self.performance_monitor.rider_request(current_ts, rider_id, current_location)
-                    self._rerun_algo_with_new_pickup(current_ts,
-                                                     current_location,
-                                                     sim_event)
-                    active_riders_pickup_map[rider_id] = source_floor
-                    rider_id_to_dropoff_location_map[rider_id] = destination_floor
-                    next_event_index += 1
+            # A new rider(s) is being registered
+            if self.current_ts == next_event_ts:
+                self._record_all_rider_requests()
 
             # A pickup point is reached, register the rider's dropoff
-            if current_location in active_riders_pickup_map.values():
-                picked_up_rider_ids = \
-                    [a for a in active_riders_pickup_map.keys() if active_riders_pickup_map[a] == current_location]
-                for rider_id in picked_up_rider_ids:
-                    self.performance_monitor.rider_pickup(current_ts, rider_id, current_location)
-                    self.algo.report_rider_pickup(current_ts, rider_id)
-                    dropoff_floor = rider_id_to_dropoff_location_map[rider_id]
-                    active_riders_dropoff_map[rider_id] = dropoff_floor
-                    self._rerun_algo_with_new_dropoff(current_ts,
-                                                      current_location,
-                                                      rider_id,
-                                                      dropoff_floor)
-                    del active_riders_pickup_map[rider_id]
+            if self.current_location in self.active_riders_pickup_map.values():
+                self._handle_rider_pickup()
 
             # A dropoff point is reached
-            if current_location in active_riders_dropoff_map.values():
-                dropped_off_rider_ids = \
-                    [a for a in active_riders_dropoff_map.keys() if active_riders_dropoff_map[a] == current_location]
-                for rider_id in dropped_off_rider_ids:
-                    self.performance_monitor.rider_dropoff(current_ts, rider_id, current_location)
-                    self.algo.report_rider_dropoff(current_ts, rider_id)
-                    del active_riders_dropoff_map[rider_id]
+            if self.current_location in self.active_riders_dropoff_map.values():
+                self._handle_rider_dropoff()
 
     def print_simulation_results(self):
         print(type(self.algo).__name__)

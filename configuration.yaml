@@ -10,5 +10,5 @@ SIMULATION:
   SIMULATION_FILE: demand_simulation/random_scenario/sim_1.csv
 
 ALGORITHM:
-#  ALGORITHM_CLASS: "algo.naive_elevator.simple_elevator.SimpleElevatorAlgo"
-  ALGORITHM_CLASS: "algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo"
+  ALGORITHM_CLASS: "algo.naive_elevator.simple_elevator.SimpleElevatorAlgo"
+#  ALGORITHM_CLASS: "algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo"
