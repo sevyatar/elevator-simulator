@@ -1,7 +1,7 @@
 import yaml
 from elevator.elevator import Elevator
 from demand_simulation.simulation import load_simulation_events
-from performance_monitor import PerformanceMonitor
+from monitoring.performance_monitor import PerformanceMonitor
 
 CONFIGURATION_FILE = 'configuration.yaml'
 
