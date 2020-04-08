@@ -16,7 +16,7 @@ class SimulationRunner(object):
         self.algo = self._get_algo(self.conf["ALGORITHM"]["ALGORITHM_CLASS"], elevator_conf)
         self.simulation_events = load_simulation_events(self.conf["SIMULATION"]["SIMULATION_FILE"],
                                                         self.conf["ELEVATOR"]["MAX_FLOOR"])
-        self.performance_monitor = PerformanceMonitor()
+        self.performance_monitor = PerformanceMonitor(self.conf["ELEVATOR"]["MAX_FLOOR"])
 
         self.current_ts = 0
         self.current_location = None
@@ -60,7 +60,8 @@ class SimulationRunner(object):
             source_floor = sim_event["source_floor"]
             destination_floor = sim_event["destination_floor"]
 
-            self.performance_monitor.rider_request(self.current_ts, rider_id, self.current_location)
+            self.performance_monitor.rider_request(self.current_ts, rider_id, source_floor,
+                                                   destination_floor, self.current_location)
             self._rerun_algo_with_new_pickup(self.current_ts,
                                              self.current_location,
                                              sim_event)
@@ -122,13 +123,13 @@ class SimulationRunner(object):
             if self.current_location in self.active_riders_dropoff_map.values():
                 self._handle_rider_dropoff()
 
-    def print_simulation_results(self):
+    def generate_simulation_results(self):
         print(type(self.algo).__name__)
-        self.performance_monitor.print_events()
+        self.performance_monitor.write_visualization_data_file()
         self.performance_monitor.print_performance_stats()
 
 
 if __name__ == "__main__":
     sim_runner = SimulationRunner()
     sim_runner.run_simulation()
-    sim_runner.print_simulation_results()
+    sim_runner.generate_simulation_results()

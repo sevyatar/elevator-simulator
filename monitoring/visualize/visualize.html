@@ -1,12 +1,28 @@
 <html>
 
 <head>
+    <title>
+        Visualize simulation
+    </title>
     <script src="fabric.min.js"></script>
     <script src="data.js" defer></script>
     <script src="visualize.js" defer></script>
+
+    <style type="text/css">
+        #time_controls {width: 100%; margin-left: 50px;}
+        .controls {display: inline-block;}
+        #event_display {color: #6000c4}
+    </style>
 </head>
 
 <body>
+    <div class="controls" id="time_controls">
+        <button id="forward" onclick="step_forward()">Forward</button>
+        TS: <span id="timestamp_display">0</span>
+        Event: <span id="event_index_display"></span> <span id="event_display"></span>
+    </div>
+    <hr>
+
     <canvas id="my_canvas"></canvas>
 </body>
 

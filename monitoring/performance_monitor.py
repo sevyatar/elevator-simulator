@@ -1,4 +1,5 @@
 import enum
+import json
 
 
 class EventType(enum.Enum):
@@ -8,39 +9,53 @@ class EventType(enum.Enum):
 
 
 class PerformanceMonitor(object):
-    def __init__(self):
+    def __init__(self, floor_count):
         self.rider_to_events_map = {}
         self.events_log = []
+        self.floor_count = floor_count
 
     class Event(object):
-        def __init__(self, rider_id, event_type, timestamp, location):
+        def __init__(self, rider_id, event_type, timestamp, event_location, elevator_location):
             self.rider_id = rider_id
             self.event_type = event_type
             self.timestamp = timestamp
-            self.location = location
+            self.event_location = event_location
+            self.elevator_location = elevator_location
 
-    # TODO - potentially add monitoring for elevator movement
-
-    def _add_rider_event(self, timestamp, rider_id, event_type, location):
+    def _add_rider_event(self, timestamp, rider_id, event_type, event_location, elevator_location):
         if rider_id not in self.rider_to_events_map:
             self.rider_to_events_map[rider_id] = []
 
-        event = PerformanceMonitor.Event(rider_id, event_type, timestamp, location)
+        event = PerformanceMonitor.Event(rider_id, event_type, timestamp, event_location, elevator_location)
         self.rider_to_events_map[rider_id].append(event)
         self.events_log.append(event)
 
-    def rider_request(self, timestamp, rider_id, current_location):
-        self._add_rider_event(timestamp, rider_id, EventType.REQUEST, current_location)
+    def rider_request(self, timestamp, rider_id, pickup_location, dropoff_location, elevator_location):
+        self._add_rider_event(timestamp, rider_id, EventType.REQUEST, pickup_location, elevator_location)
 
     def rider_pickup(self, timestamp, rider_id, location):
-        self._add_rider_event(timestamp, rider_id, EventType.PICKUP, location)
+        self._add_rider_event(timestamp, rider_id, EventType.PICKUP, location, location)
 
     def rider_dropoff(self, timestamp, rider_id, location):
-        self._add_rider_event(timestamp, rider_id, EventType.DROPOFF, location)
+        self._add_rider_event(timestamp, rider_id, EventType.DROPOFF, location, location)
 
-    def print_events(self):
+    def write_visualization_data_file(self):
+        data = dict(floors=self.floor_count, initial_floor=1, events=[])
+
         for e in self.events_log:
-            print("TS: {:>7} ; Floor {:>4} ; {} rider {}".format(e.timestamp, e.location, e.event_type, e.rider_id))
+            print("TS: {:>7} ; Elevator Floor: {:>4} Event Floor {} ; {} rider {}".format(e.timestamp,
+                                                                                          e.elevator_location,
+                                                                                          e.event_location,
+                                                                                          e.event_type,
+                                                                                          e.rider_id))
+            data["events"].append(dict(ts=e.timestamp, event_floor=e.event_location, elevator_floor=e.elevator_location,
+                                       event_type=e.event_type.name, rider=e.rider_id))
+
+        with open('monitoring/visualize/data.js', 'w') as outfile:
+            # UGLINESS AHEAD - I need to put the json data in a .js file, so I do some string modification
+            text = json.dumps(data, indent=2)
+            text = "data = " + text
+            outfile.write(text)
 
     def print_performance_stats(self):
         wait_times = []
@@ -59,3 +74,4 @@ class PerformanceMonitor(object):
         print("Wait time - total: {:>7} avg: {}".format(sum(wait_times), sum(wait_times) / len(wait_times)))
         print("Ride time - total: {:>7} avg: {}".format(sum(ride_times), sum(ride_times) / len(ride_times)))
         print("Rider time to destination - total: {:>7} avg: {}".format(sum(times_to_destination), sum(times_to_destination) / len(times_to_destination)))
+
