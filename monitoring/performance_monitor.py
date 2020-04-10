@@ -22,8 +22,6 @@ class PerformanceMonitor(object):
             self.event_location = event_location
             self.elevator_location = elevator_location
 
-        # TODO - need to track elevator movement (event without events), so that we can track exactly what it's doing
-
     def _add_rider_event(self, timestamp, rider_id, event_type, event_location, elevator_location):
         if rider_id not in self.rider_to_events_map:
             self.rider_to_events_map[rider_id] = []

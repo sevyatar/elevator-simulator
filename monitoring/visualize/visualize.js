@@ -6,10 +6,10 @@ var elevator_height = 40;
 var elevator_width = 40;
 
 var current_event_index = -1;
-var current_ts = 0;
 
-var floors = data["floors"];
+var floors_count = data["floors"];
 var initial_floor = data["initial_floor"];
+var current_floor = initial_floor;
 
 var canvas_element = document.getElementById("my_canvas");
 canvas_element.width  = window.innerWidth;
@@ -18,6 +18,7 @@ canvas_element.height = window.innerHeight;
 var timestamp_display_element = document.getElementById("timestamp_display");
 var event_index_display_element = document.getElementById("event_index_display");
 var event_display_element = document.getElementById("event_display");
+var forward_btn = document.getElementById("forward");
 
 var canvas = new fabric.Canvas('my_canvas');
 
@@ -28,7 +29,7 @@ function floor_to_elevator_y(floor) {
 function draw_initial_state() {
     // Create floors
     floor_rider_counter_map = {};
-    for (let i=1; i <= floors; i++) {
+    for (let i=1; i <= floors_count; i++) {
         var font_size = 20;
         var floor_number_text = new fabric.Text('' + i, {
             top: (floor_height - font_size) / 2,
@@ -145,18 +146,35 @@ function render_dropoff(floor) {
     decrease_text_element(elevator_riders_count);
 }
 
+function visualize_elevator_movement(previous_floor, current_floor) {
+    var floors_per_second = 10;
+
+    var floor_diff = Math.abs(current_floor - previous_floor);
+    var movement_duration_ms = floor_diff / floors_per_second * 1000;
+
+    forward_btn.disable = true;
+    elevator.animate('top', floor_to_elevator_y(current_floor), {
+      duration: movement_duration_ms,
+      onChange: canvas.renderAll.bind(canvas),
+      onComplete: function() {forward_btn.disabled = false;},
+    });
+}
+
 function draw_event() {
     var event = data.events[current_event_index];
-    var event_floor = event.event_floor
-    var elevator_floor = event.elevator_floor
+    var event_floor = event.event_floor;
+    var previous_floor = current_floor;
+
+    current_floor = event.elevator_floor;
 
     // Update controls display
     timestamp_display_element.innerHTML = event.ts;
     event_index_display_element.innerHTML = current_event_index + ' / ' + data.events.length;
     event_display.innerHTML = JSON.stringify(event);
 
-    // Update elevator location
-    elevator.top = floor_to_elevator_y(elevator_floor);
+    // Move elevator
+    visualize_elevator_movement(previous_floor, current_floor);
+    //    elevator.top = floor_to_elevator_y(current_floor);
 
     switch(event.event_type) {
         case "REQUEST":
