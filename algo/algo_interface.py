@@ -14,8 +14,8 @@ class TaskType(enum.Enum):
 
 class BaseAlgoInterface(abc.ABC):
     def __init__(self, elevator_conf):
-        self.current_timestamp = None
-        self.elevator_location = None
+        self.current_timestamp = 0
+        self.elevator_location = elevator_conf["INITIAL_FLOOR"]
         self.elevator_conf = elevator_conf
 
     @abc.abstractmethod
