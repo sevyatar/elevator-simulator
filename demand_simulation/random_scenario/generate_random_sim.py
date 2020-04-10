@@ -7,14 +7,14 @@ import main
 
 SIM_DIR = 'demand_simulation/random_scenario'
 
-def generate_random_sim(sim_filename):
+def generate_random_free_for_all(sim_filename):
     with open(main.CONFIGURATION_FILE, 'rb') as f:
         conf = yaml.load(f, Loader=yaml.FullLoader)
 
     max_floor = conf["ELEVATOR"]["MAX_FLOOR"]
     number_of_events = random.randint(1,1000)
 
-    with open(os.path.join(SIM_DIR, sim_filename), 'w') as f:
+    with open(os.path.join(SIM_DIR, 'free_for_all', sim_filename), 'w') as f:
         csv_writer = csv.writer(f)
         csv_writer.writerow(('timestamp', 'source_floor', 'destination_floor'))
 
@@ -33,4 +33,4 @@ if "__main__" == __name__:
     random.seed(1)
 
     for i in range(1, 100):
-        generate_random_sim("sim_{}.csv".format(i))
+        generate_random_free_for_all("sim_{}.csv".format(i))
