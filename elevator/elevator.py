@@ -57,7 +57,7 @@ class Elevator(object):
         time_to_next_task = time_to_move_one_floor * abs(floor_difference_to_next_task)
 
         # If the elevator CAN reach the next task in time
-        if not max_timestamp or self.current_ts + time_to_next_task < max_timestamp:
+        if not max_timestamp or self.current_ts + time_to_next_task <= max_timestamp:
             self.current_ts = self.current_ts + time_to_next_task + self.time_to_open_doors
             self.current_location = self.task_list[0]
             self.doors_open = True
