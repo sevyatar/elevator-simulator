@@ -3,6 +3,9 @@ import csv
 import os
 
 SIM_DIR = 'demand_simulation/random_scenario'
+GROUND_FLOOR = 1
+ONE_HOUR = 60 * 60 * 24
+
 
 def generate_random_free_for_all(sim_filename):
     max_floor = random.randint(5,100)
@@ -25,8 +28,6 @@ def generate_random_free_for_all(sim_filename):
 
 
 def generate_random_office_building(sim_filename):
-    GROUND_FLOOR = 1
-
     max_floor = random.randint(5,100)
     number_of_employees = random.randint(50,1000)
     employee_floors = {employee_id : random.randint(2,max_floor) for employee_id in range(number_of_employees)}
@@ -36,7 +37,6 @@ def generate_random_office_building(sim_filename):
     # - last 2 hours of the day : people leaving the office
     # - everything else : people go randomly between their floor and ground floor
     # Note : I'm assuming there's no movement between floors that doesn't involve the ground floor
-    ONE_HOUR = 60 * 60 * 24
     start_of_day_ts = 0
     end_of_day_ts = ONE_HOUR * 8
     end_of_inbound_ts = ONE_HOUR * 2
