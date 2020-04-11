@@ -1,7 +1,7 @@
 import csv
 
 
-def load_simulation_events(filename, max_floor):
+def load_simulation_events(filename):
     with open(filename, "r") as f:
         reader = csv.reader(f)
         _ = next(reader)  # skip header
@@ -17,11 +17,8 @@ def load_simulation_events(filename, max_floor):
                 raise Exception("Error in simulation file {} - timestamp can't be negative".format(filename))
 
             if source_floor < 0 or destination_floor < 0:
-                raise Exception("Error in simulation file {} - source/destination floor can't be negative".format(filename))
-
-            if source_floor > max_floor or destination_floor > max_floor:
-                raise Exception("Error in simulation file {} - source/destination floor can't be exceed max floor {}"
-                                .format(filename, max_floor))
+                raise Exception("Error in simulation file {} - source/destination floor can't be negative"
+                                .format(filename))
 
             data_to_append = dict(timestamp=timestamp, source_floor=source_floor, destination_floor=destination_floor)
             data_to_append["rider_id"] = rider_id

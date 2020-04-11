@@ -13,10 +13,11 @@ class TaskType(enum.Enum):
 
 
 class BaseAlgoInterface(abc.ABC):
-    def __init__(self, elevator_conf):
+    def __init__(self, elevator_conf, max_floor):
         self.current_timestamp = 0
         self.elevator_location = elevator_conf["INITIAL_FLOOR"]
         self.elevator_conf = elevator_conf
+        self.max_floor = max_floor
 
     @abc.abstractmethod
     def convert_event_for_rider_registration(self, source_floor, destination_floor):

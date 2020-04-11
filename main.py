@@ -13,10 +13,11 @@ class SimulationRunner(object):
 
         elevator_conf = self.conf["ELEVATOR"]
         self.elevator = Elevator(elevator_conf)
-        self.algo = self._get_algo(self.conf["ALGORITHM"]["ALGORITHM_CLASS"], elevator_conf)
-        self.simulation_events = load_simulation_events(self.conf["SIMULATION"]["SIMULATION_FILE"],
-                                                        self.conf["ELEVATOR"]["MAX_FLOOR"])
-        self.performance_monitor = PerformanceMonitor(self.conf["ELEVATOR"]["MAX_FLOOR"])
+        self.simulation_events = load_simulation_events(self.conf["SIMULATION"]["SIMULATION_FILE"])
+        self.max_floor = max(set([a["source_floor"] for a in self.simulation_events] +
+                                 [a["destination_floor"] for a in self.simulation_events]))
+        self.algo = self._get_algo(self.conf["ALGORITHM"]["ALGORITHM_CLASS"], elevator_conf, self.max_floor)
+        self.performance_monitor = PerformanceMonitor(self.max_floor)
 
         self.current_ts = 0
         self.current_location = None
@@ -27,7 +28,7 @@ class SimulationRunner(object):
         self.next_event_index = 0
 
     @staticmethod
-    def _get_algo(algo_class, elevator_conf):
+    def _get_algo(algo_class, elevator_conf, max_floor):
         '''
         Work some python magic -
         Load the initial module (probably 'algo'), and then recursively import its children until left with the
@@ -37,7 +38,7 @@ class SimulationRunner(object):
         module = __import__(algo_module)
         for attribute in algo_class.split(".")[1:]:
             module = getattr(module, attribute)
-        return module(elevator_conf)
+        return module(elevator_conf, max_floor)
 
     def _rerun_algo_with_new_pickup(self, current_ts, current_location, sim_event):
         self.algo.elevator_heartbeat(current_ts, current_location)

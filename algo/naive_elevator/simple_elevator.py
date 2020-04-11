@@ -13,8 +13,8 @@ class SimpleElevatorAlgo(NaiveElevatorAlgoInterface):
             self.floor = floor
             self.task_type = task_type
 
-    def __init__(self, elevator_conf):
-        super().__init__(elevator_conf)
+    def __init__(self, elevator_conf, max_floor):
+        super().__init__(elevator_conf, max_floor)
         self.tasks = []
 
     def register_rider_pickup(self, rider_id, source_floor):

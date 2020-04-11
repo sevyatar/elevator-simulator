@@ -7,12 +7,12 @@ class ShabbatElevatorAlgo(NaiveElevatorAlgoInterface):
     '''
 
     def _create_task_rounds(self, rounds):
-        upward = list(range(2, self.elevator_conf["MAX_FLOOR"] + 1))
-        downward = list(range(self.elevator_conf["MAX_FLOOR"] - 1, 0, -1))
+        upward = list(range(2, self.max_floor + 1))
+        downward = list(range(self.max_floor - 1, 0, -1))
         return (upward + downward) * rounds
 
-    def __init__(self, elevator_conf):
-        super().__init__(elevator_conf)
+    def __init__(self, elevator_conf, max_floor):
+        super().__init__(elevator_conf, max_floor)
         self.tasks = self._create_task_rounds(100)
 
     def _ensure_enough_tasks_in_queue(self):

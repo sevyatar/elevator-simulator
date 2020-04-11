@@ -9,7 +9,6 @@ class ElevatorTest(unittest.TestCase):
     def _get_default_conf():
         return {
             "INITIAL_FLOOR": 1,
-            "MAX_FLOOR": 10,
             "TIME_TO_GO_UP_ONE_FLOOR": 3,
             "TIME_TO_GO_DOWN_ONE_FLOOR": 4,
             "TIME_TO_OPEN_DOORS": 5,
