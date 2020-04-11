@@ -13,7 +13,7 @@ class ShabbatElevatorAlgo(NaiveElevatorAlgoInterface):
 
     def __init__(self, elevator_conf, max_floor):
         super().__init__(elevator_conf, max_floor)
-        self.tasks = self._create_task_rounds(100)
+        self.tasks = [1] + self._create_task_rounds(100)
 
     def _ensure_enough_tasks_in_queue(self):
         if len(self.tasks) < 10:
