@@ -2,9 +2,9 @@ from algo.algo_interface import NaiveElevatorAlgoInterface
 from algo.algo_interface import TaskType
 
 
-class SimpleElevatorAlgo(NaiveElevatorAlgoInterface):
+class FIFOElevatorAlgo(NaiveElevatorAlgoInterface):
     '''
-    The SimpleElevatorAlgo always handles tasks in the order in which they registered into the system, no matter
+    The FIFOElevatorAlgo always handles tasks in the order in which they registered into the system, no matter
     the elevator will just go past another potential task.
     '''
     class Task(object):
@@ -18,7 +18,7 @@ class SimpleElevatorAlgo(NaiveElevatorAlgoInterface):
         self.tasks = []
 
     def register_rider_pickup(self, rider_id, source_floor):
-        self.tasks.append(SimpleElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
+        self.tasks.append(FIFOElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
         return [task.floor for task in self.tasks]
 
     def register_rider_destination(self, rider_id, destination_floor):
@@ -26,7 +26,7 @@ class SimpleElevatorAlgo(NaiveElevatorAlgoInterface):
         Used to register a rider's destination, for algorithms where the rider inputs his destination floor
         only upon entering the elevator
         '''
-        self.tasks.append(SimpleElevatorAlgo.Task(rider_id, destination_floor, TaskType.DROPOFF))
+        self.tasks.append(FIFOElevatorAlgo.Task(rider_id, destination_floor, TaskType.DROPOFF))
         return [task.floor for task in self.tasks]
 
     def report_rider_pickup(self, timestamp, rider_id):
