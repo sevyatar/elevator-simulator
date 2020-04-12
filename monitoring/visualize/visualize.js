@@ -186,6 +186,9 @@ function draw_event() {
         case "DROPOFF":
             render_dropoff(event_floor);
             break;
+        case "FLOOR_PASSED":
+            // No need to do anything
+            break;
         default:
             break;
     }

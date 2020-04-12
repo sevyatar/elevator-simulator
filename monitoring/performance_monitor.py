@@ -6,6 +6,7 @@ class EventType(enum.Enum):
     REQUEST = 0
     PICKUP = 1
     DROPOFF = 2
+    FLOOR_PASSED = 3
 
 
 class PerformanceMonitor(object):
@@ -21,6 +22,9 @@ class PerformanceMonitor(object):
             self.timestamp = timestamp
             self.event_location = event_location
             self.elevator_location = elevator_location
+
+    def _sort_events(self):
+        self.events_log = sorted(self.events_log, key=lambda x: x.timestamp)
 
     def _add_rider_event(self, timestamp, rider_id, event_type, event_location, elevator_location):
         if rider_id not in self.rider_to_events_map:
@@ -39,7 +43,17 @@ class PerformanceMonitor(object):
     def rider_dropoff(self, timestamp, rider_id, location):
         self._add_rider_event(timestamp, rider_id, EventType.DROPOFF, location, location)
 
+    def floors_visited(self, ts_to_floor_mapping):
+        for ts, floor in ts_to_floor_mapping.items():
+            event = PerformanceMonitor.Event(rider_id=None,
+                                             event_type=EventType.FLOOR_PASSED,
+                                             timestamp=ts,
+                                             event_location=floor,
+                                             elevator_location=floor)
+            self.events_log.append(event)
+
     def write_visualization_data_file(self):
+        self._sort_events()
         data = dict(floors=self.floor_count, initial_floor=1, events=[])
 
         for e in self.events_log:

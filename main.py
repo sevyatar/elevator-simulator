@@ -124,6 +124,9 @@ class SimulationRunner(object):
             if self.current_location in self.active_riders_dropoff_map.values():
                 self._handle_rider_dropoff()
 
+        # Log all floors visited
+        self.performance_monitor.floors_visited(self.elevator.get_ts_to_arrival_floor_log())
+
     def generate_simulation_results(self):
         print(type(self.algo).__name__)
         self.performance_monitor.write_visualization_data_file()

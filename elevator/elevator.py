@@ -1,4 +1,5 @@
 import copy
+import math
 
 
 class Elevator(object):
@@ -22,6 +23,7 @@ class Elevator(object):
         self.task_list = []
         self.current_ts = 0
         self.doors_open = False
+        self.ts_to_arrival_floor_log = {self.current_ts : conf["INITIAL_FLOOR"]}
 
     def register_next_tasks(self, tasks):
         self.task_list = copy.copy(tasks)
@@ -31,6 +33,29 @@ class Elevator(object):
 
     def is_task_list_empty(self):
         return self.task_list == []
+
+    def get_ts_to_arrival_floor_log(self):
+        return self.ts_to_arrival_floor_log
+
+    def _move_elevator(self, new_location, new_ts, time_to_move_one_floor):
+        '''
+        Used for 2 things:
+            - Changing elevator value to indicate new location and current TS
+            - Log all the floors that the elevator visited/passed through
+        '''
+        # Elevator going up
+        if new_location > self.current_location:
+            all_floors = list(range(math.ceil(self.current_location), math.floor(new_location)))
+        # Elevator going down
+        else:
+            all_floors = list(range(math.floor(self.current_location), math.ceil(new_location), -1))
+
+        for floor in all_floors:
+            arrival_ts = self.current_ts + (abs(floor - self.current_location) * time_to_move_one_floor)
+            self.ts_to_arrival_floor_log[arrival_ts] = floor
+
+        self.current_location = new_location
+        self.current_ts = new_ts
 
     def run_to_next_task_or_max_ts(self, max_timestamp):
         '''
@@ -55,19 +80,23 @@ class Elevator(object):
                 return
 
         floor_difference_to_next_task = (self.task_list[0] - self.current_location)
-        time_to_move_one_floor = self.time_to_ascend_one_floor if floor_difference_to_next_task >= 0 else self.time_to_descend_one_floor
+        time_to_move_one_floor = self.time_to_ascend_one_floor \
+            if floor_difference_to_next_task >= 0 \
+            else self.time_to_descend_one_floor
         time_to_next_task = time_to_move_one_floor * abs(floor_difference_to_next_task)
 
         # If the elevator CAN reach the next task in time
         if max_timestamp is None or (self.current_ts + time_to_next_task <= max_timestamp):
-            self.current_ts += (time_to_next_task + self.time_to_open_doors)
-            self.current_location = self.task_list[0]
+            self._move_elevator(new_location=self.task_list[0],
+                                new_ts=self.current_ts + time_to_next_task + self.time_to_open_doors,
+                                time_to_move_one_floor=time_to_move_one_floor)
             self.doors_open = True
             del self.task_list[0]
         # If the elevator CAN'T reach the next task in time
         else:
-            self.current_location += ((1 if floor_difference_to_next_task > 0 else -1) *
-                                      (max_timestamp - self.current_ts) / time_to_move_one_floor)
-            self.current_ts = max_timestamp
+            new_location = self.current_location + ((1 if floor_difference_to_next_task > 0 else -1) *
+                                                    (max_timestamp - self.current_ts) / time_to_move_one_floor)
+            self._move_elevator(new_location=new_location, new_ts=max_timestamp,
+                                time_to_move_one_floor=time_to_move_one_floor)
 
 
