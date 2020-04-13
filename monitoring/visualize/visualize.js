@@ -98,7 +98,18 @@ function draw_initial_state() {
         lockMovementY: true
     });
 
-    elevator = new fabric.Group([elevator_rect, elevator_riders_count], {
+    // Ugliness ahead: I'm adding all those spaces to make sure there's enough room for the text later on.
+    elevator_event_text = new fabric.Text('                            ', {
+        top: (elevator_height - font_size) / 2,
+        left: elevator_width + 10,
+        fontSize: font_size,
+        hasControls: false,
+        hasBorders: false,
+        lockMovementX: true,
+        lockMovementY: true
+    });
+
+    elevator = new fabric.Group([elevator_rect, elevator_riders_count, elevator_event_text], {
         left: floor_group.width + 30,
         top: floor_to_elevator_y(initial_floor),
         hasControls: false,
@@ -140,10 +151,14 @@ function render_request(source_floor) {
 function render_pickup(floor) {
     decrease_text_element(floor_rider_counter_map[floor]);
     increase_text_element(elevator_riders_count);
+    elevator_event_text.set('text', 'PICKUP');
+    elevator_event_text.setColor("blue");
 }
 
 function render_dropoff(floor) {
     decrease_text_element(elevator_riders_count);
+    elevator_event_text.set('text', 'DROPOFF');
+    elevator_event_text.setColor("red");
 }
 
 function visualize_elevator_movement(previous_floor, current_floor) {
@@ -160,23 +175,8 @@ function visualize_elevator_movement(previous_floor, current_floor) {
     });
 }
 
-function draw_event() {
-    var event = data.events[current_event_index];
-    var event_floor = event.event_floor;
-    var previous_floor = current_floor;
-
-    current_floor = event.elevator_floor;
-
-    // Update controls display
-    timestamp_display_element.innerHTML = event.ts;
-    event_index_display_element.innerHTML = current_event_index + ' / ' + data.events.length;
-    event_display.innerHTML = JSON.stringify(event);
-
-    // Move elevator
-    visualize_elevator_movement(previous_floor, current_floor);
-    //    elevator.top = floor_to_elevator_y(current_floor);
-
-    switch(event.event_type) {
+function render_event(event_type, event_floor) {
+    switch(event_type) {
         case "REQUEST":
             render_request(event_floor);
             break;
@@ -194,6 +194,27 @@ function draw_event() {
     }
 
     canvas.renderAll();
+}
+
+function draw_event() {
+    var event = data.events[current_event_index];
+    var event_floor = event.event_floor;
+    var previous_floor = current_floor;
+
+    current_floor = event.elevator_floor;
+
+    // Reset elevator event text
+    elevator_event_text.set('text', '');
+
+    // Update controls display
+    timestamp_display_element.innerHTML = event.ts;
+    event_index_display_element.innerHTML = current_event_index + ' / ' + data.events.length;
+    event_display.innerHTML = JSON.stringify(event);
+
+    // Move elevator
+    visualize_elevator_movement(previous_floor, current_floor);
+
+    render_event(event.event_type, event_floor);
 }
 
 function step_forward() {
