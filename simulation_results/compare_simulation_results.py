@@ -3,7 +3,11 @@ import pandas as pd
 
 DIRECTORY = "simulation_results"
 
+
 def compare_simulation_results():
+    pd.set_option('display.max_columns', 20)
+    pd.set_option('display.width', 1000)
+
     algo_results = {}
     for filename in os.listdir(DIRECTORY):
         if not filename.endswith(".csv"):
