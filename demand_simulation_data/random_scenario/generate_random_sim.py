@@ -1,8 +1,9 @@
 import random
 import csv
 import os
+import tqdm
 
-SIM_DIR = 'demand_simulation/random_scenario'
+SIM_DIR = 'demand_simulation_data/random_scenario'
 GROUND_FLOOR = 1
 ONE_HOUR = 60 * 60 * 24
 
@@ -75,6 +76,6 @@ def generate_random_office_building(sim_filename):
 if "__main__" == __name__:
     random.seed(1)
 
-    for i in range(1, 100):
-        # generate_random_free_for_all("sim_{}.csv".format(i))
+    for i in tqdm.tqdm(range(1, 1000)):
+        generate_random_free_for_all("sim_{}.csv".format(i))
         generate_random_office_building("sim_{}.csv".format(i))

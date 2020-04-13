@@ -1,5 +1,6 @@
 import enum
 import json
+import statistics
 
 
 class EventType(enum.Enum):
@@ -71,7 +72,7 @@ class PerformanceMonitor(object):
             text = "data = " + text
             outfile.write(text)
 
-    def print_performance_stats(self):
+    def calculate_performace_stats(self):
         wait_times = []
         ride_times = []
         times_to_destination = []
@@ -84,8 +85,39 @@ class PerformanceMonitor(object):
             ride_times.append(dropoff.timestamp - pickup.timestamp)
             times_to_destination.append(dropoff.timestamp - request.timestamp)
 
-        print("Time to complete all tasks - {}".format(self.events_log[-1].timestamp))
-        print("Wait time - total: {:>7} avg: {}".format(sum(wait_times), sum(wait_times) / len(wait_times)))
-        print("Ride time - total: {:>7} avg: {}".format(sum(ride_times), sum(ride_times) / len(ride_times)))
-        print("Rider time to destination - total: {:>7} avg: {}".format(sum(times_to_destination), sum(times_to_destination) / len(times_to_destination)))
+        time_to_complete_all_tasks = self.events_log[-1].timestamp
+
+        total_wait_time = sum(wait_times)
+        mean_wait_time = statistics.mean(wait_times)
+        median_wait_time = statistics.median(wait_times)
+
+        total_ride_time = sum(ride_times)
+        mean_ride_time = statistics.mean(ride_times)
+        median_ride_time = statistics.median(ride_times)
+
+        total_time_to_destination = sum(times_to_destination)
+        mean_time_to_destination = statistics.mean(times_to_destination)
+        median_time_to_destination = statistics.median(times_to_destination)
+
+        return dict(
+            time_to_complete_all_tasks=time_to_complete_all_tasks,
+            total_wait_time=total_wait_time,
+            mean_wait_time=mean_wait_time,
+            median_wait_time=median_wait_time,
+            total_ride_time=total_ride_time,
+            mean_ride_time=mean_ride_time,
+            median_ride_time=median_ride_time,
+            total_time_to_destination=total_time_to_destination,
+            mean_time_to_destination=mean_time_to_destination,
+            median_time_to_destination=median_time_to_destination
+        )
+
+    def print_performance_stats(self):
+        stats_dict = self.calculate_performace_stats()
+
+        print("Time to complete all tasks - {}".format(stats_dict["time_to_complete_all_tasks"]))
+        print("Wait time - total: {:>7} avg: {}".format(stats_dict["total_wait_time"], stats_dict["mean_wait_time"]))
+        print("Ride time - total: {:>7} avg: {}".format(stats_dict["total_ride_time"], stats_dict["mean_ride_time"]))
+        print("Rider time to destination - total: {:>7} avg: {}".format(stats_dict["total_time_to_destination"],
+                                                                        stats_dict["mean_time_to_destination"]))
 

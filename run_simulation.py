@@ -1,22 +1,27 @@
+import os
 import yaml
+import tqdm
+import time
+import pandas as pd
 from elevator.elevator import Elevator
-from demand_simulation.simulation import load_simulation_events
+from demand_simulation_data.load_simulation_data import load_simulation_events
 from monitoring.performance_monitor import PerformanceMonitor
 
 CONFIGURATION_FILE = 'configuration.yaml'
 
 
 class SimulationRunner(object):
-    def __init__(self):
+    def __init__(self, simulation_filename, algo_class=None):
         with open(CONFIGURATION_FILE, 'rb') as f:
             self.conf = yaml.load(f, Loader=yaml.FullLoader)
 
         elevator_conf = self.conf["ELEVATOR"]
         self.elevator = Elevator(elevator_conf)
-        self.simulation_events = load_simulation_events(self.conf["SIMULATION"]["SIMULATION_FILE"])
+        self.simulation_events = load_simulation_events(simulation_filename)
         self.max_floor = max(set([a["source_floor"] for a in self.simulation_events] +
                                  [a["destination_floor"] for a in self.simulation_events]))
-        self.algo = self._get_algo(self.conf["ALGORITHM"]["ALGORITHM_CLASS"], elevator_conf, self.max_floor)
+        self.algo_class = algo_class if algo_class else self.conf["ALGORITHM"]["ALGORITHM_CLASS"]
+        self.algo = self._get_algo(elevator_conf)
         self.performance_monitor = PerformanceMonitor(self.max_floor)
 
         self.current_ts = 0
@@ -27,18 +32,20 @@ class SimulationRunner(object):
         self.active_riders_dropoff_map = {}
         self.next_event_index = 0
 
-    @staticmethod
-    def _get_algo(algo_class, elevator_conf, max_floor):
+    def get_algo_class(self):
+        return self.algo_class
+
+    def _get_algo(self, elevator_conf):
         '''
         Work some python magic -
         Load the initial module (probably 'algo'), and then recursively import its children until left with the
         relevant class type to instantiate.
         '''
-        algo_module = ".".join(algo_class.split(".")[:-1])
+        algo_module = ".".join(self.algo_class.split(".")[:-1])
         module = __import__(algo_module)
-        for attribute in algo_class.split(".")[1:]:
+        for attribute in self.algo_class.split(".")[1:]:
             module = getattr(module, attribute)
-        return module(elevator_conf, max_floor)
+        return module(elevator_conf, self.max_floor)
 
     def _rerun_algo_with_new_pickup(self, current_ts, current_location, sim_event):
         self.algo.elevator_heartbeat(current_ts, current_location)
@@ -127,13 +134,53 @@ class SimulationRunner(object):
         # Log all floors visited
         self.performance_monitor.floors_visited(self.elevator.get_ts_to_arrival_floor_log())
 
-    def generate_simulation_results(self):
-        print(type(self.algo).__name__)
+    def write_visualization_data_file(self):
         self.performance_monitor.write_visualization_data_file()
+
+    def get_performance_stats(self):
+        return self.performance_monitor.calculate_performace_stats()
+
+    def print_performance_stats(self):
         self.performance_monitor.print_performance_stats()
 
 
-if __name__ == "__main__":
-    sim_runner = SimulationRunner()
+def run_single_simulation():
+    sim_runner = SimulationRunner('demand_simulation_data/manual_scenario/small_office_1.csv')
     sim_runner.run_simulation()
-    sim_runner.generate_simulation_results()
+    sim_runner.write_visualization_data_file()
+    sim_runner.print_performance_stats()
+
+
+def run_all_simulations_in_dir(directory, algo_class):
+    print("running all simulations using: {}".format(algo_class))
+
+    stats_dicts = []
+    for filename in tqdm.tqdm(os.listdir(directory)):
+        if not filename.endswith(".csv"):
+            continue
+
+        sim_runner = SimulationRunner(os.path.join(directory, filename), algo_class)
+        sim_runner.run_simulation()
+        stats = sim_runner.get_performance_stats()
+        stats_dicts.append(stats)
+
+    df = pd.DataFrame(stats_dicts)
+    df.to_csv(os.path.join("simulation_results", algo_class + ".csv"), index=False)
+
+
+def run_multiple_simulations():
+    sim_data_dir = 'demand_simulation_data/random_scenario/free_for_all'
+    algo_classes_to_run = [
+        'algo.naive_elevator.fifo_elevator.FIFOElevatorAlgo',
+        'algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo'
+    ]
+
+    for algo_class in algo_classes_to_run:
+        run_all_simulations_in_dir(sim_data_dir, algo_class)
+        time.sleep(0.1)
+
+
+if __name__ == "__main__":
+    # run_single_simulation()
+    run_multiple_simulations()
+

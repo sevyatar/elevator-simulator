@@ -5,9 +5,6 @@ ELEVATOR:
   TIME_TO_OPEN_DOORS: 5
   TIME_TO_CLOSE_DOORS: 5
 
-SIMULATION:
-  SIMULATION_FILE: demand_simulation/manual_scenario/small_office_1.csv
-
 ALGORITHM:
   ALGORITHM_CLASS: "algo.naive_elevator.fifo_elevator.FIFOElevatorAlgo"
 #  ALGORITHM_CLASS: "algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo"
