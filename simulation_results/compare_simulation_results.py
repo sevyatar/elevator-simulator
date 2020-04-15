@@ -1,3 +1,4 @@
+import math
 import os
 import pandas as pd
 import numpy as np
@@ -29,8 +30,11 @@ def _display_plots(algo_results):
     metric_names = list(list(algo_results.values())[0])
     algo_names = [x.split(".")[-1] for x in algo_results.keys()]
 
-    fig, axs = plt.subplots(len(metric_names))
+    plots_per_row = 2
+    n_plots = len(metric_names)
+    fig, axs = plt.subplots(math.ceil(float(n_plots) / plots_per_row), plots_per_row)
     for i, metric in enumerate(metric_names):
+        axs_index = (int(i / plots_per_row), i % plots_per_row)
         x_positions = np.arange(len(algo_names))
         means = []
         stds = []
@@ -38,18 +42,16 @@ def _display_plots(algo_results):
             means.append(results_df[metric].mean())
             stds.append(results_df[metric].std())
 
-        axs[i].bar(x_positions, means, yerr=stds, align='center', alpha=0.5, ecolor='black', capsize=10)
+        axs[axs_index].bar(x_positions, means, yerr=stds, align='center', alpha=0.5, ecolor='black', capsize=10)
 
-        axs[i].set_xticks(x_positions)
-        axs[i].set_xticklabels(algo_names)
+        axs[axs_index].set_xticks(x_positions)
+        axs[axs_index].set_xticklabels(algo_names)
 
-        # axs[i].set_ylabel(metric)
-        axs[i].set_title(metric)
-        axs[i].yaxis.grid(True)
+        axs[axs_index].set_title(metric)
+        axs[axs_index].yaxis.grid(True)
 
-    # Save the figure and show
+    # Show figure
     fig.tight_layout()
-    # fig.subplots_adjust(hspace=2)
     plt.show()
 
 def compare_simulation_results():
