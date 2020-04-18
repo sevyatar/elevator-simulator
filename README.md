@@ -6,18 +6,37 @@ Elevator Types
 --------------
 
 The elevator simulator can deal with 3 different types of elevators: 
-1. Naive Elevator:
+1. `Naive Elevator`:
 This elevator has 1 button outside, and the rider chooses his destination floor once he walks into the elevator.
 
-2. Up-Down Button Elevator:
+2. `Up-Down Button Elevator`:
 This elevator has 2 buttons outside - an up and a down button. The rider chooses his destination floor once he walks into the elevator.
 
 
-3. Destination-First Elevator:
+3. `Destination-First Elevator`:
 In this elevator, the rider inputs his destination floor before getting into the elevator.
 
 For every elevator type, the simulator can handle any number of elevators that work simultaneously.
 
-Notes
------
-at this stage, we're assuming that the elevator has infinite spacial capacity.
+Adding an algorithm
+-------------------
+To add an algorithm, simply add a new class to the `algo` directory, in the relevant sub-dir according to the elevator type.
+Make sure to implement the relevant interface from `algo/algo_interface.py`
+
+Running a simulation
+--------------------
+1. Generate random simulation scenarios
+`python demand_simulation_data/random_scenario/generate_random_sim.py`
+2. Run the simulation (runs all algorithms, on a specific type of demand pattern, to change the pattern - edit run_simulation.py : main)
+`python run_simulation.py`
+3. Compare algorithm results
+`simulation_results/compare_simulation_results.py` 
+
+Visualizing a simulation run
+----------------------------
+1. Edit `run_simulation.py : main` to execute `run_single_simulation` instead of `run_multiple_simulations`
+2. Load `monitoring/visualize/visualize.html` into a browser (tested on Chrome)
+
+Final Notes
+-----------
+- at this stage, we're assuming that the elevator has infinite passenger capacity.
