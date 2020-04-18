@@ -17,11 +17,11 @@ class FIFOElevatorAlgo(NaiveElevatorAlgoInterface):
         super().__init__(elevator_conf, max_floor)
         self.tasks = []
 
-    def register_rider_pickup(self, timestamp, rider_id, source_floor):
+    def register_rider_pickup(self, rider_id, source_floor):
         self.tasks.append(FIFOElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
         return [task.floor for task in self.tasks]
 
-    def register_rider_destination(self, timestamp, rider_id, destination_floor):
+    def register_rider_destination(self, rider_id, destination_floor):
         '''
         Used to register a rider's destination, for algorithms where the rider inputs his destination floor
         only upon entering the elevator
