@@ -51,12 +51,12 @@ class SimulationRunner(object):
         self.algo.elevator_heartbeat(current_ts, current_location)
         event_data = self.algo.convert_event_for_rider_registration(sim_event["source_floor"],
                                                                     sim_event["destination_floor"])
-        algo_output_tasks = self.algo.register_rider_pickup(sim_event["rider_id"], *event_data)
+        algo_output_tasks = self.algo.register_rider_pickup(current_ts, sim_event["rider_id"], *event_data)
         self.elevator.register_next_tasks(algo_output_tasks)
 
     def _rerun_algo_with_new_dropoff(self, current_ts, current_location, rider_id, destination_floor):
         self.algo.elevator_heartbeat(current_ts, current_location)
-        algo_output_tasks = self.algo.register_rider_destination(rider_id, destination_floor)
+        algo_output_tasks = self.algo.register_rider_destination(current_ts, rider_id, destination_floor)
         self.elevator.register_next_tasks(algo_output_tasks)
 
     def _record_all_rider_requests(self):
@@ -169,7 +169,7 @@ def run_all_simulations_in_dir(directory, algo_class):
 
 
 def run_multiple_simulations():
-    sim_data_dir = 'demand_simulation_data/random_scenario/free_for_all'
+    sim_data_dir = 'demand_simulation_data/random_scenario/office_building'
     algo_classes_to_run = [
         'algo.naive_elevator.fifo_elevator.FIFOElevatorAlgo',
         'algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo'
