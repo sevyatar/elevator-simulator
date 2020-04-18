@@ -1,8 +1,4 @@
-import os
 import yaml
-import tqdm
-import time
-import pandas as pd
 from elevator.elevator import Elevator
 from demand_simulation_data.load_simulation_data import load_simulation_events
 from monitoring.performance_monitor import PerformanceMonitor
@@ -11,7 +7,7 @@ CONFIGURATION_FILE = 'configuration.yaml'
 
 
 class SimulationRunner(object):
-    def __init__(self, simulation_filename, algo_class=None):
+    def __init__(self, simulation_filename, algo_class):
         with open(CONFIGURATION_FILE, 'rb') as f:
             self.conf = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -20,7 +16,7 @@ class SimulationRunner(object):
         self.simulation_events = load_simulation_events(simulation_filename)
         self.max_floor = max(set([a["source_floor"] for a in self.simulation_events] +
                                  [a["destination_floor"] for a in self.simulation_events]))
-        self.algo_class = algo_class if algo_class else self.conf["ALGORITHM"]["ALGORITHM_CLASS"]
+        self.algo_class = algo_class
         self.algo = self._get_algo(elevator_conf)
         self.performance_monitor = PerformanceMonitor(self.max_floor)
 
@@ -144,44 +140,7 @@ class SimulationRunner(object):
         self.performance_monitor.print_performance_stats()
 
 
-def run_single_simulation():
-    sim_runner = SimulationRunner('demand_simulation_data/manual_scenario/small_office_1.csv')
-    sim_runner.run_simulation()
-    sim_runner.write_visualization_data_file()
-    sim_runner.print_performance_stats()
-
-
-def run_all_simulations_in_dir(directory, algo_class):
-    print("running all simulations using: {}".format(algo_class))
-
-    stats_dicts = []
-    for filename in tqdm.tqdm(os.listdir(directory)):
-        if not filename.endswith(".csv"):
-            continue
-
-        sim_runner = SimulationRunner(os.path.join(directory, filename), algo_class)
-        sim_runner.run_simulation()
-        stats = sim_runner.get_performance_stats()
-        stats_dicts.append(stats)
-
-    df = pd.DataFrame(stats_dicts)
-    df.to_csv(os.path.join("simulation_results", algo_class + ".csv"), index=False)
-
-
-def run_multiple_simulations():
-    sim_data_dir = 'demand_simulation_data/random_scenario/free_for_all'
-    algo_classes_to_run = [
-        'algo.naive_elevator.fifo_elevator.FIFOElevatorAlgo',
-        'algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo',
-        'algo.naive_elevator.knuth_elevator.KnuthElevatorAlgo'
-    ]
-
-    for algo_class in algo_classes_to_run:
-        run_all_simulations_in_dir(sim_data_dir, algo_class)
-        time.sleep(0.1)
-
-
 if __name__ == "__main__":
-    # run_single_simulation()
-    run_multiple_simulations()
+    run_single_simulation()
+    # run_multiple_simulations()
 

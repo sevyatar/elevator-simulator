@@ -4,7 +4,3 @@ ELEVATOR:
   TIME_TO_GO_DOWN_ONE_FLOOR: 3
   TIME_TO_OPEN_DOORS: 5
   TIME_TO_CLOSE_DOORS: 5
-
-ALGORITHM:
-  ALGORITHM_CLASS: "algo.naive_elevator.fifo_elevator.FIFOElevatorAlgo"
-#  ALGORITHM_CLASS: "algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo"

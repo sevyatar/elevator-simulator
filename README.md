@@ -23,18 +23,18 @@ Adding an algorithm
 To add an algorithm, simply add a new class to the `algo` directory, in the relevant sub-dir according to the elevator type.
 Make sure to implement the relevant interface from `algo/algo_interface.py`
 
-Running a simulation
---------------------
+Running all simulations
+-----------------------
 1. Generate random simulation scenarios
 `python demand_simulation_data/random_scenario/generate_random_sim.py`
-2. Run the simulation (runs all algorithms, on a specific type of demand pattern, to change the pattern - edit run_simulation.py : main)
-`python run_simulation.py`
+2. Run the simulation (runs all algorithms, on a specific type of demand pattern, to change the pattern - edit run_all_simulations.py : run_multiple_simulations)
+`python run_all_simulations.py`
 3. Compare algorithm results
 `simulation_results/compare_simulation_results.py` 
 
-Visualizing a simulation run
-----------------------------
-1. Edit `run_simulation.py : main` to execute `run_single_simulation` instead of `run_multiple_simulations`
+Running and visualizing single simulation
+-----------------------------------------
+1. `python run_single_simulations.py`
 2. Load `monitoring/visualize/visualize.html` into a browser (tested on Chrome)
 
 Final Notes
