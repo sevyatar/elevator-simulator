@@ -22,10 +22,6 @@ class FIFOElevatorAlgo(NaiveElevatorAlgoInterface):
         return [task.floor for task in self.tasks]
 
     def register_rider_destination(self, rider_id, destination_floor):
-        '''
-        Used to register a rider's destination, for algorithms where the rider inputs his destination floor
-        only upon entering the elevator
-        '''
         self.tasks.append(FIFOElevatorAlgo.Task(rider_id, destination_floor, TaskType.DROPOFF))
         return [task.floor for task in self.tasks]
 

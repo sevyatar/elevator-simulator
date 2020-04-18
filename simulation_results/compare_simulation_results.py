@@ -45,7 +45,7 @@ def _display_plots(algo_results):
         axs[axs_index].bar(x_positions, means, yerr=stds, align='center', alpha=0.5, ecolor='black', capsize=10)
 
         axs[axs_index].set_xticks(x_positions)
-        axs[axs_index].set_xticklabels(algo_names)
+        axs[axs_index].set_xticklabels(algo_names, fontdict=dict(fontsize=8))
 
         axs[axs_index].set_title(metric)
         axs[axs_index].yaxis.grid(True)
@@ -53,6 +53,7 @@ def _display_plots(algo_results):
     # Show figure
     fig.tight_layout()
     plt.show()
+
 
 def compare_simulation_results():
     pd.set_option('display.max_columns', 20)
