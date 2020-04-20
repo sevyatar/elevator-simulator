@@ -52,9 +52,9 @@ class KnuthElevatorAlgo(NaiveElevatorAlgoInterface):
                                              reverse=True)
         else:
             current_direction_tasks = sorted([t.floor for t in self.all_tasks if t.floor <= self.elevator_location],
-                                             reverse=False)
-            reverse_direction_tasks = sorted([t.floor for t in self.all_tasks if t.floor > self.elevator_location],
                                              reverse=True)
+            reverse_direction_tasks = sorted([t.floor for t in self.all_tasks if t.floor > self.elevator_location],
+                                             reverse=False)
 
         next_tasks = current_direction_tasks + reverse_direction_tasks
         return next_tasks
