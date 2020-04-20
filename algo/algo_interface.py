@@ -19,6 +19,24 @@ class BaseAlgoInterface(abc.ABC):
         self.elevator_conf = elevator_conf
         self.max_floor = max_floor
 
+    @staticmethod
+    def get_algo(algo_class, elevator_conf, max_floor):
+        '''
+        Work some python magic -
+        Load the initial module (probably 'algo'), and then recursively import its children until left with the
+        relevant class type to instantiate.
+        '''
+        algo_module = ".".join(algo_class.split(".")[:-1])
+        module = __import__(algo_module)
+        for attribute in algo_class.split(".")[1:]:
+            module = getattr(module, attribute)
+        return module(elevator_conf, max_floor)
+
+    def get_algo_name(self):
+        module_name_split = self.__module__.split('.')
+        algo_name = module_name_split[-2] + '_' + module_name_split[-1]
+        return algo_name.replace('_elevator', '')
+
     @abc.abstractmethod
     def convert_event_for_rider_registration(self, source_floor, destination_floor):
         '''
@@ -35,14 +53,22 @@ class BaseAlgoInterface(abc.ABC):
         pass
 
     def elevator_heartbeat(self, timestamp, elevator_location):
+        '''
+        Used by the elevator to report its location+time to the algo
+        '''
         self.current_timestamp = timestamp
         self.elevator_location = elevator_location
 
     def report_rider_pickup(self, timestamp, rider_id):
+        '''
+        Signal the algo that a rider pickup took place
+        '''
         pass
 
     def report_rider_dropoff(self, timestamp, rider_id):
-        pass
+        '''
+        Signal the algo that a rider dropoff took place
+        '''
 
 
 class NaiveElevatorAlgoInterface(BaseAlgoInterface):

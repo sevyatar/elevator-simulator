@@ -1,14 +1,13 @@
 import yaml
+from algo.algo_interface import BaseAlgoInterface
 from elevator.elevator import Elevator
 from demand_simulation_data.load_simulation_data import load_simulation_events
 from monitoring.performance_monitor import PerformanceMonitor
 
-CONFIGURATION_FILE = 'configuration.yaml'
-
 
 class SimulationRunner(object):
-    def __init__(self, simulation_filename, algo_class):
-        with open(CONFIGURATION_FILE, 'rb') as f:
+    def __init__(self, simulation_filename, algo_class, elevator_config_filename):
+        with open(elevator_config_filename, 'rb') as f:
             self.conf = yaml.load(f, Loader=yaml.FullLoader)
 
         elevator_conf = self.conf["ELEVATOR"]
@@ -17,7 +16,7 @@ class SimulationRunner(object):
         self.max_floor = max(set([a["source_floor"] for a in self.simulation_events] +
                                  [a["destination_floor"] for a in self.simulation_events]))
         self.algo_class = algo_class
-        self.algo = self._get_algo(elevator_conf)
+        self.algo = BaseAlgoInterface.get_algo(self.algo_class, elevator_conf, self.max_floor)
         self.performance_monitor = PerformanceMonitor(self.max_floor)
 
         self.current_ts = 0
@@ -28,20 +27,8 @@ class SimulationRunner(object):
         self.active_riders_dropoff_map = {}
         self.next_event_index = 0
 
-    def get_algo_class(self):
-        return self.algo_class
-
-    def _get_algo(self, elevator_conf):
-        '''
-        Work some python magic -
-        Load the initial module (probably 'algo'), and then recursively import its children until left with the
-        relevant class type to instantiate.
-        '''
-        algo_module = ".".join(self.algo_class.split(".")[:-1])
-        module = __import__(algo_module)
-        for attribute in self.algo_class.split(".")[1:]:
-            module = getattr(module, attribute)
-        return module(elevator_conf, self.max_floor)
+    def get_algo_name(self):
+        return self.algo.get_algo_name()
 
     def _rerun_algo_with_new_pickup(self, current_ts, current_location, sim_event):
         self.algo.elevator_heartbeat(current_ts, current_location)
