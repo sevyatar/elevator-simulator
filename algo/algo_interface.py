@@ -73,7 +73,7 @@ class BaseAlgoInterface(abc.ABC):
 
 class NaiveElevatorAlgoInterface(BaseAlgoInterface):
     @abc.abstractmethod
-    def register_rider_pickup(self, rider_id, source_floor):
+    def register_rider_source(self, rider_id, source_floor):
         pass
 
     def convert_event_for_rider_registration(self, source_floor, destination_floor):
@@ -85,7 +85,7 @@ class NaiveElevatorAlgoInterface(BaseAlgoInterface):
 
 class UpDownElevatorAlgoInterface(BaseAlgoInterface):
     @abc.abstractmethod
-    def register_rider_pickup(self, rider_id, source_floor, direction: UpDown):
+    def register_rider_source(self, rider_id, source_floor, direction: UpDown):
         pass
 
     def convert_event_for_rider_registration(self, source_floor, destination_floor):
@@ -98,7 +98,7 @@ class UpDownElevatorAlgoInterface(BaseAlgoInterface):
 
 class DestinationFirstElevatorAlgoInterface(BaseAlgoInterface):
     @abc.abstractmethod
-    def register_rider_pickup(self, rider_id, source_floor, destination_floor):
+    def register_rider_source(self, rider_id, source_floor, destination_floor):
         pass
 
     def convert_event_for_rider_registration(self, source_floor, destination_floor):

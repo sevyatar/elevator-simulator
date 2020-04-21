@@ -17,7 +17,7 @@ class FIFOElevatorAlgo(NaiveElevatorAlgoInterface):
         super().__init__(elevator_conf, max_floor)
         self.tasks = []
 
-    def register_rider_pickup(self, rider_id, source_floor):
+    def register_rider_source(self, rider_id, source_floor):
         self.tasks.append(FIFOElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
         return [task.floor for task in self.tasks]
 

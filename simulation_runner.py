@@ -34,7 +34,7 @@ class SimulationRunner(object):
         self.algo.elevator_heartbeat(current_ts, current_location)
         event_data = self.algo.convert_event_for_rider_registration(sim_event["source_floor"],
                                                                     sim_event["destination_floor"])
-        algo_output_tasks = self.algo.register_rider_pickup(sim_event["rider_id"], *event_data)
+        algo_output_tasks = self.algo.register_rider_source(sim_event["rider_id"], *event_data)
         self.elevator.register_next_tasks(algo_output_tasks)
 
     def _rerun_algo_with_new_dropoff(self, current_ts, current_location, rider_id, destination_floor):

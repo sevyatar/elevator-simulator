@@ -25,7 +25,7 @@ class ShabbatElevatorAlgo(NaiveElevatorAlgoInterface):
         '''
         return []
 
-    def register_rider_pickup(self, *args):
+    def register_rider_source(self, *args):
         self._ensure_enough_tasks_in_queue()
         return self.tasks
 

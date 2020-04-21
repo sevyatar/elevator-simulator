@@ -59,7 +59,7 @@ class KnuthElevatorAlgo(NaiveElevatorAlgoInterface):
         next_tasks = current_direction_tasks + reverse_direction_tasks
         return next_tasks
 
-    def register_rider_pickup(self, rider_id, source_floor):
+    def register_rider_source(self, rider_id, source_floor):
         self.all_tasks.append(KnuthElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
         return self._get_next_tasks()
 
