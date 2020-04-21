@@ -35,7 +35,8 @@ def run_multiple_simulations():
     algo_classes_to_run = [
         'algo.naive_elevator.fifo_elevator.FIFOElevatorAlgo',
         'algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo',
-        'algo.naive_elevator.knuth_elevator.KnuthElevatorAlgo'
+        'algo.naive_elevator.knuth_elevator.KnuthElevatorAlgo',
+        'algo.up_down_elevator.knuth_elevator.KnuthElevatorAlgo'
     ]
 
     for algo_class in algo_classes_to_run:
