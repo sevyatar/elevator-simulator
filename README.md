@@ -37,6 +37,8 @@ Running and visualizing single simulation
 1. `python run_single_simulations.py`
 2. Load `monitoring/visualize/visualize.html` into a browser (tested on Chrome)
 
-Final Notes
+Notes
 -----------
-- at this stage, we're assuming that the elevator has infinite passenger capacity.
+- At this stage we're assuming that the elevator has infinite passenger capacity
+- Assuming the elevator can change direction immediately (0 time)
+- Current implementation only supports a single elevator system
