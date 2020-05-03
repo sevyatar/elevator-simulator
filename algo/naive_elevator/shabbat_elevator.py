@@ -34,7 +34,7 @@ class ShabbatElevatorAlgo(NaiveElevatorAlgoInterface):
         return self.tasks
 
     def report_rider_pickup(self, *args):
-        pass
+        return self.tasks
 
     def report_rider_dropoff(self, *args):
-        pass
+        return self.tasks

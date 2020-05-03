@@ -93,7 +93,9 @@ class KnuthElevatorAlgo(UpDownElevatorAlgoInterface):
     def report_rider_pickup(self, timestamp, rider_id):
         pickup_task = [a for a in self.all_tasks if a.rider_id == rider_id and a.task_type == TaskType.PICKUP][0]
         self.all_tasks.remove(pickup_task)
+        return self._get_next_tasks()
 
     def report_rider_dropoff(self, timestamp, rider_id):
         pickup_task = [a for a in self.all_tasks if a.rider_id == rider_id and a.task_type == TaskType.DROPOFF][0]
         self.all_tasks.remove(pickup_task)
+        return self._get_next_tasks()

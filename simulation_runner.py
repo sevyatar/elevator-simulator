@@ -67,7 +67,9 @@ class SimulationRunner(object):
 
         for rider_id in picked_up_rider_ids:
             self.performance_monitor.rider_pickup(self.current_ts, rider_id, self.current_location)
-            self.algo.report_rider_pickup(self.current_ts, rider_id)
+            algo_output_tasks = self.algo.report_rider_pickup(self.current_ts, rider_id)
+            self.elevator.register_next_tasks(algo_output_tasks)
+
             dropoff_floor = self.rider_id_to_dropoff_location_map[rider_id]
             self.active_riders_dropoff_map[rider_id] = dropoff_floor
             self._rerun_algo_with_new_dropoff(self.current_ts,
@@ -82,7 +84,8 @@ class SimulationRunner(object):
              self.active_riders_dropoff_map[a] == self.current_location]
         for rider_id in dropped_off_rider_ids:
             self.performance_monitor.rider_dropoff(self.current_ts, rider_id, self.current_location)
-            self.algo.report_rider_dropoff(self.current_ts, rider_id)
+            algo_output_tasks = self.algo.report_rider_dropoff(self.current_ts, rider_id)
+            self.elevator.register_next_tasks(algo_output_tasks)
             del self.active_riders_dropoff_map[rider_id]
 
     def run_simulation(self):

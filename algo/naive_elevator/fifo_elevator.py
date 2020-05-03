@@ -28,7 +28,9 @@ class FIFOElevatorAlgo(NaiveElevatorAlgoInterface):
     def report_rider_pickup(self, timestamp, rider_id):
         pickup_task = [a for a in self.tasks if a.rider_id == rider_id and a.task_type == TaskType.PICKUP][0]
         self.tasks.remove(pickup_task)
+        return [task.floor for task in self.tasks]
 
     def report_rider_dropoff(self, timestamp, rider_id):
         pickup_task = [a for a in self.tasks if a.rider_id == rider_id and a.task_type == TaskType.DROPOFF][0]
         self.tasks.remove(pickup_task)
+        return [task.floor for task in self.tasks]
