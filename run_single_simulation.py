@@ -9,7 +9,8 @@ if __name__ == "__main__":
         simulation_filename='demand_simulation_data/manual_scenario/small_office_1.csv',
         # simulation_filename='demand_simulation_data/random_scenario/free_for_all/sim_524.csv',
         # algo_class='algo.up_down_elevator.knuth_elevator.KnuthElevatorAlgo')
-        algo_class='algo.naive_elevator.knuth_elevator.KnuthElevatorAlgo')
+        # algo_class='algo.naive_elevator.knuth_elevator.KnuthElevatorAlgo')
+        algo_class='algo.naive_elevator.q_learning_elevator.q_learning_elevator.QLearningElevatorAlgo')
         # algo_class='algo.naive_elevator.fifo_elevator.FIFOElevatorAlgo')
         # algo_class='algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo')
 
