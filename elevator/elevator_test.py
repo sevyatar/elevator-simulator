@@ -70,10 +70,11 @@ class ElevatorTest(unittest.TestCase):
         self.assertEqual(ts1, max_ts_1)
         self.assertEqual(location1, conf["INITIAL_FLOOR"] + 0.5)
 
-        max_ts_2 = conf["TIME_TO_GO_UP_ONE_FLOOR"]
+        # Now the elevator can reach the next task (and open doors)
+        max_ts_2 = conf["TIME_TO_GO_UP_ONE_FLOOR"] + conf["TIME_TO_OPEN_DOORS"]
         elevator.run_to_next_task_or_max_ts(max_ts_2)
         ts2, location2 = elevator.get_status()
-        self.assertEqual(ts2, conf["TIME_TO_GO_UP_ONE_FLOOR"])
+        self.assertEqual(ts2, max_ts_2)
         self.assertEqual(location2, next_tasks[0])
 
 
