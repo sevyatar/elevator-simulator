@@ -1,6 +1,7 @@
 import enum
 import json
 import statistics
+import numpy as np
 
 
 class EventType(enum.Enum):
@@ -8,6 +9,18 @@ class EventType(enum.Enum):
     PICKUP = 1
     DROPOFF = 2
     FLOOR_PASSED = 3
+
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(NpEncoder, self).default(obj)
 
 
 class PerformanceMonitor(object):
@@ -68,7 +81,7 @@ class PerformanceMonitor(object):
 
         with open('monitoring/visualize/data.js', 'w') as outfile:
             # UGLINESS AHEAD - I need to put the json data in a .js file, so I do some string modification
-            text = json.dumps(data, indent=2)
+            text = json.dumps(data, cls=NpEncoder, indent=2)
             text = "data = " + text
             outfile.write(text)
 
