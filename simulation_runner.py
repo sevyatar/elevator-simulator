@@ -129,8 +129,3 @@ class SimulationRunner(object):
     def print_performance_stats(self):
         self.performance_monitor.print_performance_stats()
 
-
-if __name__ == "__main__":
-    run_single_simulation()
-    # run_multiple_simulations()
-

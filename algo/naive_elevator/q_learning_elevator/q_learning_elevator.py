@@ -15,7 +15,7 @@ DISCOUNT = 0.95
 
 # Q-learning exploration constants
 ROUND_TO_START_EPSILON_DECAYING = 1
-ROUND_TO_END_EPSILON_DECAYING = 10000
+ROUND_TO_END_EPSILON_DECAYING = 1000
 
 
 class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
@@ -29,7 +29,7 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
 
     System actions are {1, 2 .. max_floor} and denote which floor the elevator is heading to next
     '''
-    MODEL_PICKLE_FILENAME = "model.pkl"
+    MODEL_PICKLE_FILENAME = "algo/naive_elevator/q_learning_elevator/model.pkl"
 
     class Task(object):
         def __init__(self, rider_id, floor, task_type):
@@ -44,15 +44,40 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         # Q-learning related params
         self.action_space = list(range(1, max_floor+1))
         self.state_space = [max_floor] + \
-                           ([MAX_FLOOR_TASKS_TO_COUNT] * max_floor) + \
-                           ([MAX_FLOOR_TASKS_TO_COUNT] * max_floor)
-        self.q_table = np.random.uniform(low=-2, high=0, size=(self.state_space + [len(self.action_space)]))
+                           ([MAX_FLOOR_TASKS_TO_COUNT + 1] * max_floor) + \
+                           ([MAX_FLOOR_TASKS_TO_COUNT + 1] * max_floor)
+
+        try:
+            self.load_model_from_file()
+        except Exception as e:
+            self.reset_model()
 
         self.previous_state_and_action = None
 
-        # Q-learning exploration params
+    ####################################################################################################
+    # The following methods are responsible for maintaining a persistent state between multiple runs (episodes)
+    def reset_model(self):
+        self.q_table = np.random.uniform(low=-2, high=0, size=(self.state_space + [len(self.action_space)]))
+        self.episode = 0
         self.epsilon = 1
-        self.epsilon_decay_value = self.epsilon / (ROUND_TO_END_EPSILON_DECAYING - ROUND_TO_START_EPSILON_DECAYING)
+
+    def load_model_from_file(self):
+        with open(self.MODEL_PICKLE_FILENAME, 'rb') as file:
+            (self.q_table, self.episode, self.epsilon) = pickle.load(file)
+
+        # This is a new episode, so increment the counter
+        self.episode += 1
+
+        # If needed, decay epsilon
+        if ROUND_TO_END_EPSILON_DECAYING >= self.episode >= ROUND_TO_START_EPSILON_DECAYING:
+            epsilon_decay_value = self.epsilon / (ROUND_TO_END_EPSILON_DECAYING - ROUND_TO_START_EPSILON_DECAYING)
+            self.epsilon -= epsilon_decay_value
+
+    def save_model_to_file(self):
+        with open(self.MODEL_PICKLE_FILENAME, 'wb') as file:
+            pickle.dump((self.q_table, self.episode, self.epsilon), file)
+
+    ####################################################################################################
 
     def _discreet_elevator_location(self):
         '''
@@ -84,14 +109,22 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
                 dropoffs_counter[floor] = min(dropoffs_counter[floor], MAX_FLOOR_TASKS_TO_COUNT)
 
         state = [self._discreet_elevator_location() - 1] + list(pickups_counter.values()) + list(dropoffs_counter.values())
-        return state
+        return tuple(state)
+
+    def _last_action_reward(self):
+        '''
+        Conceptually, we want to minimize the time between a rider requesting a ride and dropoff,
+        so we "punish" the system for every second that a rider hasn't reached his destination
+        '''
+        # TODO - how do I handle reward from previous action?
+        return -1
 
     def _get_next_floor_tasks(self):
         '''
         Actually runs the Q-learning RL process and returns the action (action is the next floor to go to)
         '''
         if not self.tasks:
-            return None
+            return []
 
         current_state = self._get_state()
 
@@ -101,13 +134,12 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
             current_action = np.argmax(self.q_table[current_state])
         else:
             # Get random action - a random floor out of those floors with a task in them
-            # current_action = np.random.choice(self.action_space)
-            current_action = np.random.choice(list(set([x.floor for x in self.tasks])))
+            # Floors are [1..max_floor] while actions are [0..(max_floor-1)], so we subsctract -1 from the floors
+            current_action = np.random.choice(list(set([(x.floor - 1) for x in self.tasks])))
 
         # Update the previous state's q value
         if self.previous_state_and_action:
-            # TODO - how do I handle reward from previous action?
-            reward = -1
+            reward = self._last_action_reward()
 
             max_current_q = np.max(self.q_table[current_state])
             previous_q = self.q_table[self.previous_state_and_action]
@@ -116,10 +148,14 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
             # Update Q table with new Q value
             self.q_table[self.previous_state_and_action] = updated_q
 
-        self.previous_state_and_action = current_state + [current_action - 1,]
+        self.previous_state_and_action = current_state + (current_action,)
 
-        # return self.tasks[0].floor if self.tasks else None
-        return [current_action]
+        # Floors are [1..max_floor] while actions are [0..(max_floor-1)], so we add +1 to returned value
+        next_floor = current_action + 1
+        # We add all subsequent floors to make sure all next tasks are passed to the elevator queue
+        # (this helps us avoid some weird corner cases)
+        subsequent_floors = [t.floor for t in self.tasks if t.floor != next_floor]
+        return [next_floor] + subsequent_floors
 
     def register_rider_source(self, rider_id, source_floor):
         self.tasks.append(QLearningElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
