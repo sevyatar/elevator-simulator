@@ -1,4 +1,4 @@
-import os
+import pandas as pd
 from tqdm import tqdm
 
 from simulation_runner import SimulationRunner
@@ -9,10 +9,10 @@ ELEVATOR_CONFIGURATION_FILE = 'elevator_configuration.yaml'
 
 SIMULATION_FILENAME = 'demand_simulation_data/manual_scenario/small_office_2.csv'
 
-EPISODES = 20000
+EPISODES = 100000
 
 def train():
-
+    performance_stats = []
     for i in range(EPISODES):
         sim_runner = SimulationRunner(SIMULATION_FILENAME, Q_LEARNING_ALGO_CLASS, ELEVATOR_CONFIGURATION_FILE)
 
@@ -22,10 +22,17 @@ def train():
         sim_runner.run_simulation()
         sim_runner.algo.save_model_to_file()
         # sim_runner.write_visualization_data_file()
-        sim_runner.print_performance_stats()
-        print()
-        print()
-        print()
+        performance_stats.append(sim_runner.get_performance_stats())
+
+        if i % 500 == 0:
+            print(f"Running episode - {i}")
+            sim_runner.print_performance_stats()
+            pd.DataFrame(performance_stats).to_csv('algo/naive_elevator/q_learning_elevator/performance_stats.csv',
+                                                   index=False)
+            print()
+            print()
+            print()
+
 
 
 if "__main__" == __name__:

@@ -7,7 +7,7 @@ import pickle
 
 # Since we need to create a discreet and finite state space, we need to cap the max number of tasks per floor we use,
 # every number over the cap will be rounded to the cap itself
-MAX_FLOOR_TASKS_TO_COUNT = 3
+MAX_FLOOR_TASKS_TO_COUNT = 1
 
 # Q-learning constants
 LEARNING_RATE = 0.1
@@ -15,7 +15,7 @@ DISCOUNT = 0.95
 
 # Q-learning exploration constants
 ROUND_TO_START_EPSILON_DECAYING = 1
-ROUND_TO_END_EPSILON_DECAYING = 1000
+ROUND_TO_END_EPSILON_DECAYING = 10000
 
 
 class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
@@ -46,18 +46,22 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         self.state_space = [max_floor] + \
                            ([MAX_FLOOR_TASKS_TO_COUNT + 1] * max_floor) + \
                            ([MAX_FLOOR_TASKS_TO_COUNT + 1] * max_floor)
+        self.previous_state_and_action = None
+
+        # Params for calculating reward
+        self.last_action_ts = None
+        self.rider_registration_ts = {}
 
         try:
             self.load_model_from_file()
         except Exception as e:
             self.reset_model()
 
-        self.previous_state_and_action = None
 
     ####################################################################################################
     # The following methods are responsible for maintaining a persistent state between multiple runs (episodes)
     def reset_model(self):
-        self.q_table = np.random.uniform(low=-2, high=0, size=(self.state_space + [len(self.action_space)]))
+        self.q_table = np.random.uniform(low=-600, high=0, size=(self.state_space + [len(self.action_space)]))
         self.episode = 0
         self.epsilon = 1
 
@@ -116,8 +120,8 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         Conceptually, we want to minimize the time between a rider requesting a ride and dropoff,
         so we "punish" the system for every second that a rider hasn't reached his destination
         '''
-        # TODO - how do I handle reward from previous action?
-        return -1
+        rider_registrations = self.rider_registration_ts.values()
+        return -1 * sum([(self.current_timestamp - x) for x in rider_registrations if x >= self.last_action_ts])
 
     def _get_next_floor_tasks(self):
         '''
@@ -149,6 +153,7 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
             self.q_table[self.previous_state_and_action] = updated_q
 
         self.previous_state_and_action = current_state + (current_action,)
+        self.last_action_ts = self.current_timestamp
 
         # Floors are [1..max_floor] while actions are [0..(max_floor-1)], so we add +1 to returned value
         next_floor = current_action + 1
@@ -159,6 +164,7 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
 
     def register_rider_source(self, rider_id, source_floor):
         self.tasks.append(QLearningElevatorAlgo.Task(rider_id, source_floor, TaskType.PICKUP))
+        self.rider_registration_ts[rider_id] = self.current_timestamp
         return self._get_next_floor_tasks()
 
     def register_rider_destination(self, rider_id, destination_floor):
@@ -173,7 +179,11 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
     def report_rider_dropoff(self, timestamp, rider_id):
         pickup_task = [a for a in self.tasks if a.rider_id == rider_id and a.task_type == TaskType.DROPOFF][0]
         self.tasks.remove(pickup_task)
-        return self._get_next_floor_tasks()
+        # Note - I have to calculate next tasks before removing the rider from rider_registration_ts, since
+        # we need this entry to accurately calculate reward
+        next_tasks = self._get_next_floor_tasks()
+        del self.rider_registration_ts[rider_id]
+        return next_tasks
 
     def _load_model_from_file(self):
         with open(self.MODEL_PICKLE_FILENAME, 'wb') as file:
