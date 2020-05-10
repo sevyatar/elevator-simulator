@@ -1,4 +1,6 @@
-from algo.algo_interface import NaiveElevatorAlgoInterface
+import enum
+
+from algo.algo_interface import NaiveElevatorAlgoInterface, UpDown
 from algo.algo_interface import TaskType
 
 import numpy as np
@@ -8,6 +10,7 @@ import pickle
 # Since we need to create a discreet and finite state space, we need to cap the max number of tasks per floor we use,
 # every number over the cap will be rounded to the cap itself
 MAX_FLOOR_TASKS_TO_COUNT = 2
+REQUESTS_TO_CONSIDER_FOR_DIRECTION_TREND = 10
 
 # Q-learning constants
 INITIAL_EPSILON = 1
@@ -21,12 +24,19 @@ ROUND_TO_START_LEARNING_DECAY = 0
 ROUND_TO_END_LEARNING_DECAY = 10000
 
 
+class DirectionTrend(enum.Enum):
+    MOSTLY_UP = 0
+    MOSTLY_DOWN = 1
+    UNDETERMINED = 2
+
+
 class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
     '''
     The QLearningElevatorAlgo uses Q-learning to decide on the elevator action.
 
     System state is (l, P1, P2 ... Pn, D1, D2 ... Dn) where:
     l - discreet elevator location
+    d - direction trend (mostly up / mostly down / neither)
     Pi - number of pending pickups at floor i (1 <= i <= max_floor)
     Di - number of registered dropoffs for floor i (1 <= i <= max_floor)
 
@@ -43,10 +53,11 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
     def __init__(self, elevator_conf, max_floor):
         super().__init__(elevator_conf, max_floor)
         self.tasks = []
+        self.request_direction_times = []
 
         # Q-learning related params
         self.action_space = list(range(1, max_floor+1))
-        self.state_space = [max_floor] + \
+        self.state_space = [max_floor, len(DirectionTrend)] + \
                            ([MAX_FLOOR_TASKS_TO_COUNT + 1] * max_floor) + \
                            ([MAX_FLOOR_TASKS_TO_COUNT + 1] * max_floor)
         self.previous_state_and_action = None
@@ -63,7 +74,7 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
     ####################################################################################################
     # The following methods are responsible for maintaining a persistent state between multiple runs (episodes)
     def reset_model(self):
-        self.q_table = np.random.uniform(low=-200, high=0, size=(self.state_space + [len(self.action_space)]))
+        self.q_table = np.random.uniform(low=-200, high=-100, size=(self.state_space + [len(self.action_space)]))
         self.episode = 0
         self.epsilon = INITIAL_EPSILON
         self.learning_rate = INITIAL_LEARNING_RATE
@@ -94,6 +105,28 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         '''
         return int(round(self.elevator_location))
 
+    def _direction_trend(self):
+        '''
+        Given the general request direction trend, over the last REQUESTS_TO_CONSIDER_FOR_DIRECTION_TREND requests
+        We can say a specific direction is a "trend", if >=70% of the requests are following it
+        '''
+        directions_list = [x["direction"] for x in sorted(self.request_direction_times,
+                                                          key=lambda a: a["timestamp"], reverse=False)]
+        up = 0
+        down = 0
+        for direction in directions_list[:-REQUESTS_TO_CONSIDER_FOR_DIRECTION_TREND]:
+            if direction == UpDown.UP:
+                up += 1
+            else:
+                down += 1
+
+        if up / REQUESTS_TO_CONSIDER_FOR_DIRECTION_TREND >= 0.7:
+            return DirectionTrend.MOSTLY_UP
+        elif down / REQUESTS_TO_CONSIDER_FOR_DIRECTION_TREND >= 0.7:
+            return DirectionTrend.MOSTLY_DOWN
+        else:
+            return DirectionTrend.UNDETERMINED
+
     def _get_state(self):
         '''
         System state is (l, P1, P2 ... Pn, D1, D2 ... Dn) where:
@@ -105,7 +138,8 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         pickups_counter = collections.Counter([t.floor - 1 for t in self.tasks if t.task_type == TaskType.PICKUP])
         dropoffs_counter = collections.Counter([t.floor - 1 for t in self.tasks if t.task_type == TaskType.DROPOFF])
 
-        # Add floors with no tasks to the pickup/dropoff collections
+        # Add floors with no tasks to the pickup/dropoff collections,
+        # and make sure floor task count doesn't exceed the max value
         for floor in range(self.max_floor):
             if floor not in pickups_counter:
                 pickups_counter[floor] = 0
@@ -117,7 +151,9 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
             else:
                 dropoffs_counter[floor] = min(dropoffs_counter[floor], MAX_FLOOR_TASKS_TO_COUNT)
 
-        state = [self._discreet_elevator_location() - 1] + list(pickups_counter.values()) + list(dropoffs_counter.values())
+        state = [self._discreet_elevator_location() - 1, self._direction_trend().value] + \
+                list(pickups_counter.values()) + \
+                list(dropoffs_counter.values())
         return tuple(state)
 
     def _last_action_reward(self):
@@ -176,6 +212,10 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
 
     def register_rider_destination(self, rider_id, destination_floor):
         self.tasks.append(QLearningElevatorAlgo.Task(rider_id, destination_floor, TaskType.DROPOFF))
+        self.request_direction_times.append({
+            "timestamp": self.current_timestamp,
+            "direction": UpDown.UP if destination_floor > self.elevator_location else UpDown.DOWN
+        })
         return self._get_next_floor_tasks()
 
     def report_rider_pickup(self, timestamp, rider_id):
