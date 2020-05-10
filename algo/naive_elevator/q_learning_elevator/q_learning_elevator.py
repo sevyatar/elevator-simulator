@@ -7,15 +7,18 @@ import pickle
 
 # Since we need to create a discreet and finite state space, we need to cap the max number of tasks per floor we use,
 # every number over the cap will be rounded to the cap itself
-MAX_FLOOR_TASKS_TO_COUNT = 1
+MAX_FLOOR_TASKS_TO_COUNT = 2
 
 # Q-learning constants
-LEARNING_RATE = 0.1
+INITIAL_EPSILON = 1
+MIN_EPSILON = 0
+INITIAL_LEARNING_RATE = 0.8
+MIN_LEARNING_RATE = 0.1
 DISCOUNT = 0.95
 
 # Q-learning exploration constants
-ROUND_TO_START_EPSILON_DECAYING = 1
-ROUND_TO_END_EPSILON_DECAYING = 10000
+ROUND_TO_START_LEARNING_DECAY = 0
+ROUND_TO_END_LEARNING_DECAY = 10000
 
 
 class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
@@ -57,29 +60,31 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         except Exception as e:
             self.reset_model()
 
-
     ####################################################################################################
     # The following methods are responsible for maintaining a persistent state between multiple runs (episodes)
     def reset_model(self):
-        self.q_table = np.random.uniform(low=-600, high=0, size=(self.state_space + [len(self.action_space)]))
+        self.q_table = np.random.uniform(low=-200, high=0, size=(self.state_space + [len(self.action_space)]))
         self.episode = 0
-        self.epsilon = 1
+        self.epsilon = INITIAL_EPSILON
+        self.learning_rate = INITIAL_LEARNING_RATE
 
     def load_model_from_file(self):
         with open(self.MODEL_PICKLE_FILENAME, 'rb') as file:
-            (self.q_table, self.episode, self.epsilon) = pickle.load(file)
+            (self.q_table, self.episode, self.epsilon, self.learning_rate) = pickle.load(file)
 
         # This is a new episode, so increment the counter
         self.episode += 1
 
-        # If needed, decay epsilon
-        if ROUND_TO_END_EPSILON_DECAYING >= self.episode >= ROUND_TO_START_EPSILON_DECAYING:
-            epsilon_decay_value = self.epsilon / (ROUND_TO_END_EPSILON_DECAYING - ROUND_TO_START_EPSILON_DECAYING)
-            self.epsilon -= epsilon_decay_value
+        # If needed, decay epsilon and learning rate
+        if ROUND_TO_END_LEARNING_DECAY >= self.episode >= ROUND_TO_START_LEARNING_DECAY:
+            count_rounds_to_decay = ROUND_TO_END_LEARNING_DECAY - ROUND_TO_START_LEARNING_DECAY
+            self.epsilon = INITIAL_EPSILON + ((MIN_EPSILON - INITIAL_EPSILON) * self.episode / count_rounds_to_decay)
+            self.learning_rate = INITIAL_LEARNING_RATE + \
+                                 ((MIN_LEARNING_RATE - INITIAL_LEARNING_RATE) * self.episode / count_rounds_to_decay)
 
     def save_model_to_file(self):
         with open(self.MODEL_PICKLE_FILENAME, 'wb') as file:
-            pickle.dump((self.q_table, self.episode, self.epsilon), file)
+            pickle.dump((self.q_table, self.episode, self.epsilon, self.learning_rate), file)
 
     ####################################################################################################
 
@@ -121,7 +126,8 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         so we "punish" the system for every second that a rider hasn't reached his destination
         '''
         rider_registrations = self.rider_registration_ts.values()
-        return -1 * sum([(self.current_timestamp - x) for x in rider_registrations if x >= self.last_action_ts])
+        reward = -1 * sum([(self.current_timestamp - x) for x in rider_registrations if x >= self.last_action_ts])
+        return reward
 
     def _get_next_floor_tasks(self):
         '''
@@ -138,16 +144,17 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
             current_action = np.argmax(self.q_table[current_state])
         else:
             # Get random action - a random floor out of those floors with a task in them
-            # Floors are [1..max_floor] while actions are [0..(max_floor-1)], so we subsctract -1 from the floors
+            # Floors are [1..max_floor] while actions are [0..(max_floor-1)], so we substract -1 from the floors
             current_action = np.random.choice(list(set([(x.floor - 1) for x in self.tasks])))
 
-        # Update the previous state's q value
-        if self.previous_state_and_action:
+        # Update the previous state's q value, only if some time has passed
+        # (implying that the elevator really acted on the previous decision)
+        if self.previous_state_and_action and self.last_action_ts != self.current_timestamp:
             reward = self._last_action_reward()
 
             max_current_q = np.max(self.q_table[current_state])
             previous_q = self.q_table[self.previous_state_and_action]
-            updated_q = (1 - LEARNING_RATE) * previous_q + LEARNING_RATE * (reward + DISCOUNT * max_current_q)
+            updated_q = (1 - self.learning_rate) * previous_q + self.learning_rate * (reward + DISCOUNT * max_current_q)
 
             # Update Q table with new Q value
             self.q_table[self.previous_state_and_action] = updated_q
