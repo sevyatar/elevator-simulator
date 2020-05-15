@@ -17,7 +17,7 @@ def run_all_simulations_in_dir(directory, algo_class):
     print("running all simulations using: {}".format(algo.get_algo_name()))
 
     stats_dicts = []
-    for filename in tqdm(os.listdir(directory)[:5]):
+    for filename in tqdm(os.listdir(directory)[:]):
         if not filename.endswith(".csv"):
             continue
 
@@ -31,10 +31,12 @@ def run_all_simulations_in_dir(directory, algo_class):
 
 
 def run_multiple_simulations():
-    sim_data_dir = 'demand_simulation_data/random_scenario/free_for_all'
+    # sim_data_dir = 'demand_simulation_data/random_scenario/free_for_all'
+    sim_data_dir = 'demand_simulation_data/random_scenario/tiny_office_building'
     algo_classes_to_run = [
+        'algo.naive_elevator.q_learning_elevator.q_learning_elevator.QLearningElevatorAlgo',
         'algo.naive_elevator.fifo_elevator.FIFOElevatorAlgo',
-        'algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo',
+        # 'algo.naive_elevator.shabbat_elevator.ShabbatElevatorAlgo',
         'algo.naive_elevator.knuth_elevator.KnuthElevatorAlgo',
         'algo.up_down_elevator.knuth_elevator.KnuthElevatorAlgo'
     ]

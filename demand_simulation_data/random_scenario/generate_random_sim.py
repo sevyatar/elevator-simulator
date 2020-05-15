@@ -28,9 +28,7 @@ def generate_random_free_for_all(sim_filename):
             current_ts = new_ts
 
 
-def generate_random_office_building(sim_filename):
-    max_floor = random.randint(5,100)
-    number_of_employees = random.randint(50,1000)
+def generate_random_office_building(sim_type, sim_filename, max_floor, number_of_employees):
     employee_floors = {employee_id : random.randint(2,max_floor) for employee_id in range(number_of_employees)}
 
     # For an office building, we split the day according to:
@@ -64,7 +62,7 @@ def generate_random_office_building(sim_filename):
             events_list.append((lunch_end, GROUND_FLOOR, employee_floor))
 
     # Write sorted events to CSV file
-    with open(os.path.join(SIM_DIR, 'office_building', sim_filename), 'w') as f:
+    with open(os.path.join(SIM_DIR, sim_type, sim_filename), 'w') as f:
         csv_writer = csv.writer(f)
         csv_writer.writerow(('timestamp', 'source_floor', 'destination_floor'))
 
@@ -76,6 +74,16 @@ def generate_random_office_building(sim_filename):
 if "__main__" == __name__:
     random.seed(1)
 
+    print("Free for all sims")
     for i in tqdm.tqdm(range(1, 1000)):
         generate_random_free_for_all("sim_{}.csv".format(i))
-        generate_random_office_building("sim_{}.csv".format(i))
+
+    print("large office building sims")
+    for i in tqdm.tqdm(range(1, 1000)):
+        generate_random_office_building("large_office_building", "sim_{}.csv".format(i),
+                                        random.randint(5, 100), random.randint(50, 1000))
+
+    print("tiny office building sims")
+    for i in tqdm.tqdm(range(1, 1000)):
+        generate_random_office_building("tiny_office_building", "sim_{}.csv".format(i),
+                                        3, 100)

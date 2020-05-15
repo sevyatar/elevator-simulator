@@ -9,7 +9,7 @@ import pickle
 
 # Since we need to create a discreet and finite state space, we need to cap the max number of tasks per floor we use,
 # every number over the cap will be rounded to the cap itself
-MAX_FLOOR_TASKS_TO_COUNT = 2
+MAX_FLOOR_TASKS_TO_COUNT = 3
 REQUESTS_TO_CONSIDER_FOR_DIRECTION_TREND = 10
 
 # Q-learning constants
@@ -17,7 +17,7 @@ INITIAL_EPSILON = 1
 MIN_EPSILON = 0.05
 INITIAL_LEARNING_RATE = 0.8
 MIN_LEARNING_RATE = 0.1
-DISCOUNT = 0.95
+DISCOUNT = 0.99
 
 # Q-learning exploration constants
 ROUND_TO_START_LEARNING_DECAY = 0
@@ -89,9 +89,11 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         # If needed, decay epsilon and learning rate
         if ROUND_TO_END_LEARNING_DECAY >= self.episode >= ROUND_TO_START_LEARNING_DECAY:
             count_rounds_to_decay = ROUND_TO_END_LEARNING_DECAY - ROUND_TO_START_LEARNING_DECAY
-            self.epsilon = INITIAL_EPSILON + ((MIN_EPSILON - INITIAL_EPSILON) * self.episode / count_rounds_to_decay)
-            self.learning_rate = INITIAL_LEARNING_RATE + \
-                                 ((MIN_LEARNING_RATE - INITIAL_LEARNING_RATE) * self.episode / count_rounds_to_decay)
+            epsilon_decay_factor = (MIN_EPSILON / INITIAL_EPSILON) ** (1 / count_rounds_to_decay)
+            learning_decay_factor = (MIN_LEARNING_RATE / INITIAL_LEARNING_RATE) ** (1 / count_rounds_to_decay)
+
+            self.epsilon = max(MIN_EPSILON, self.epsilon * epsilon_decay_factor)
+            self.learning_rate = max(MIN_LEARNING_RATE, self.learning_rate * learning_decay_factor)
 
     def save_model_to_file(self):
         with open(self.MODEL_PICKLE_FILENAME, 'wb') as file:
