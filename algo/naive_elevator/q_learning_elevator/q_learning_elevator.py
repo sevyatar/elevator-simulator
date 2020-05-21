@@ -233,11 +233,3 @@ class QLearningElevatorAlgo(NaiveElevatorAlgoInterface):
         next_tasks = self._get_next_floor_tasks()
         del self.rider_registration_ts[rider_id]
         return next_tasks
-
-    def _load_model_from_file(self):
-        with open(self.MODEL_PICKLE_FILENAME, 'wb') as file:
-            self.q_table = pickle.load(file)
-
-    def _save_model_to_file(self):
-        with open(self.MODEL_PICKLE_FILENAME, 'wb') as file:
-            pickle.dump(self.q_table, file)
